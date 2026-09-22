@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GCP Pattern: RAG (Retrieval-Augmented Generation)</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    background: #f0f2f5;
+    color: #1f2328;
+  }
+
+  .deck { display: flex; flex-direction: column; gap: 0; }
+
+  .slide {
+    width: 100%;
+    min-height: 100vh;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 4px solid #e5e7eb;
+    page-break-after: always;
+  }
+
+  /* ── Header bar ── */
+  .slide-header {
+    background: #1a73e8;
+    color: #ffffff;
+    padding: 28px 48px 22px;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+  }
+  .slide-header .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.75;
+    margin-bottom: 4px;
+  }
+  .slide-header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.3px; }
+  .slide-header h2 { font-size: 20px; font-weight: 600; }
+  .slide-header .gcp-badge {
+    margin-left: auto;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  /* ── Body ── */
+  .slide-body {
+    flex: 1;
+    padding: 32px 48px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ── Layouts ── */
+  .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .four-col  { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+
+  /* ── Cards ── */
+  .card {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px 22px;
+  }
+  .card h3 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #1a73e8; margin-bottom: 10px;
+  }
+  .card ul { padding-left: 18px; }
+  .card ul li { font-size: 13.5px; margin-bottom: 5px; color: #1f2328; }
+  .card p { font-size: 13.5px; color: #1f2328; }
+
+  /* ── Decision cards ── */
+  .decision-card {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #1a73e8;
+    border-radius: 8px;
+    padding: 16px 20px;
+  }
+  .decision-card h3 { font-size: 14px; font-weight: 700; color: #1f2328; margin-bottom: 6px; }
+  .decision-card p  { font-size: 13px; color: #57606a; margin-bottom: 8px; }
+  .decision-card .options { display: flex; gap: 8px; flex-wrap: wrap; }
+  .option-pill {
+    background: #e8f0fe; color: #1a73e8;
+    border-radius: 20px; padding: 3px 12px;
+    font-size: 12px; font-weight: 600;
+  }
+  .option-pill.warn  { background: #fce8e6; color: #c5221f; }
+  .option-pill.green { background: #e6f4ea; color: #137333; }
+  .option-pill.purple { background: #ede9fe; color: #6d28d9; }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: #57606a; margin-bottom: 4px;
+  }
+
+  /* ── Diagrams ── */
+  .diagram-container {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px 24px 16px;
+  }
+  .diagram-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.09em; color: #57606a; margin-bottom: 14px;
+  }
+  .diagram-container svg { display: block; width: 100%; }
+
+  /* ── Intro text ── */
+  .intro-text { font-size: 15px; color: #1f2328; line-height: 1.7; max-width: 820px; }
+
+  /* ── Tags ── */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .tag {
+    background: #e8f0fe; color: #1967d2;
+    border-radius: 4px; padding: 3px 10px;
+    font-size: 12px; font-weight: 600;
+  }
+
+  /* ── Tabs ── */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 20px;
+  }
+  .tab-btn {
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #57606a;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: #1a73e8; }
+  .tab-btn.active { color: #1a73e8; border-bottom-color: #1a73e8; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Next button ── */
+  .next-btn-row { display: flex; justify-content: flex-end; padding-top: 8px; }
+  .next-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #1a73e8;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .next-btn:hover { background: #1557b0; }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center; padding: 18px;
+    font-size: 12px; color: #57606a;
+    border-top: 1px solid #e5e7eb; background: #ffffff;
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 1 — Overview + Two Diagrams (tabbed)
+════════════════════════════════════════════ -->
+<section class="slide" id="slide-1">
+  <div class="slide-header">
+    <div>
+      <div class="eyebrow">GCP Architecture Patterns · Generative AI</div>
+      <h1>RAG Pattern — Retrieval-Augmented Generation</h1>
+    </div>
+    <div class="gcp-badge">Google Cloud Platform</div>
+  </div>
+  <div class="slide-body">
+
+    <!-- Pattern overview -->
+    <p class="intro-text">
+      A customer wants to ground LLM responses in a private or domain-specific knowledge base rather than relying solely on model training data.
+      RAG retrieves semantically relevant document chunks at query time, injects them into the LLM prompt as context, and returns a grounded response.
+    </p>
+
+    <div>
+      <div class="section-label">Common Workloads</div>
+      <div class="tag-row">
+        <span class="tag">Enterprise Search &amp; Q&amp;A</span>
+        <span class="tag">Customer Support (grounded on docs)</span>
+        <span class="tag">Legal / Compliance Copilots</span>
+        <span class="tag">Internal Knowledge Assistants</span>
+        <span class="tag">Product Documentation Bots</span>
+        <span class="tag">Code Repository Search</span>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3>RAG Core Components</h3>
+        <ul>
+          <li><strong>Document Ingestion Pipeline</strong> — load, chunk, embed, store</li>
+          <li><strong>Embedding Model</strong> — converts text to dense vector representations</li>
+          <li><strong>Vector Database</strong> — stores and indexes embeddings for ANN retrieval</li>
+          <li><strong>Retriever</strong> — fetches top-K chunks by cosine / dot-product similarity</li>
+          <li><strong>LLM (Generator)</strong> — synthesises the answer from retrieved context</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Knowledge Base Strategies</h3>
+        <ul>
+          <li><strong>Preloaded (static)</strong> — ingested before deployment; ideal for stable document corpora</li>
+          <li><strong>User-loaded (interactive)</strong> — users upload documents at runtime; per-session or persistent namespaces</li>
+          <li><strong>Hybrid</strong> — static base corpus + user-uploaded supplements in tenant-scoped namespaces</li>
+          <li><strong>Continuous ingestion</strong> — event-driven pipeline updates index as source docs change</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:4px 0;" />
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showTab('r1')">Preloaded Knowledge Base</button>
+      <button class="tab-btn" onclick="showTab('r2')">Interactive (User-Loaded)</button>
+    </div>
+
+    <!-- ── Tab 1: Preloaded ── -->
+    <div class="tab-panel active" id="r1">
+      <p class="intro-text" style="margin-bottom:16px;">
+        The knowledge base is built offline — before the solution is deployed — by an ingestion pipeline that processes source documents, generates embeddings, and populates the vector index.
+        At query time, the Client Application retrieves relevant chunks and sends them with the prompt to the LLM.
+      </p>
+      <div class="diagram-container">
+        <div class="diagram-title">Fig 1 — Preloaded Knowledge Base (Offline Ingestion → Online Retrieval)</div>
+        <svg viewBox="0 0 900 380" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, system-ui, sans-serif">
+
+          <!-- ── OFFLINE INGESTION LANE ── -->
+          <rect x="10" y="14" width="878" height="148" rx="8" fill="#f7f8fa" stroke="#e5e7eb" stroke-width="1.5"/>
+          <text x="24" y="32" font-size="10" font-weight="700" fill="#57606a" letter-spacing="0.09em">OFFLINE INGESTION PIPELINE  (run before deployment)</text>
+
+          <!-- Source Docs -->
+          <rect x="24" y="42" width="130" height="104" rx="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+          <text x="89" y="68" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328">Source Docs</text>
+          <text x="89" y="86" text-anchor="middle" font-size="10" fill="#57606a">GCS Bucket</text>
+          <text x="89" y="101" text-anchor="middle" font-size="10" fill="#9ca3af">PDF · DOCX · HTML</text>
+          <text x="89" y="116" text-anchor="middle" font-size="10" fill="#9ca3af">JSON · Confluence</text>
+          <text x="89" y="131" text-anchor="middle" font-size="10" fill="#9ca3af">BigQuery exports</text>
+
+          <!-- Arrow -->
+          <line x1="154" y1="94" x2="188" y2="94" stroke="#9ca3af" stroke-width="1.5"/>
+          <polygon points="188,89 201,94 188,99" fill="#9ca3af"/>
+
+          <!-- Chunker -->
+          <rect x="201" y="54" width="120" height="80" rx="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+          <text x="261" y="82" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328">Document</text>
+          <text x="261" y="99" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328">Chunker</text>
+          <text x="261" y="116" text-anchor="middle" font-size="10" fill="#57606a">Dataflow / Cloud Run</text>
+
+          <!-- Arrow -->
+          <line x1="321" y1="94" x2="355" y2="94" stroke="#9ca3af" stroke-width="1.5"/>
+          <polygon points="355,89 368,94 355,99" fill="#9ca3af"/>
+
+          <!-- Embedding Model -->
+          <rect x="368" y="54" width="140" height="80" rx="8" fill="#e8f0fe" stroke="#93c5fd" stroke-width="1.5"/>
+          <text x="438" y="82" text-anchor="middle" font-size="12" font-weight="700" fill="#1967d2">Embedding</text>
+          <text x="438" y="99" text-anchor="middle" font-size="12" font-weight="700" fill="#1967d2">Model</text>
+          <text x="438" y="116" text-anchor="middle" font-size="10" fill="#57606a">text-embedding-004 API</text>
+
+          <!-- Arrow -->
+          <line x1="508" y1="94" x2="542" y2="94" stroke="#9ca3af" stroke-width="1.5"/>
+          <polygon points="542,89 555,94 542,99" fill="#9ca3af"/>
+
+          <!-- Vector DB -->
+          <rect x="555" y="54" width="140" height="80" rx="8" fill="#fff8e1" stroke="#fbbf24" stroke-width="1.5"/>
+          <text x="625" y="79" text-anchor="middle" font-size="12" font-weight="700" fill="#b45309">Vector</text>
+          <text x="625" y="95" text-anchor="middle" font-size="12" font-weight="700" fill="#b45309">Database</text>
+          <text x="625" y="111" text-anchor="middle" font-size="10" fill="#57606a">Search · Vector Search</text>
+          <text x="625" y="125" text-anchor="middle" font-size="10" fill="#57606a">AlloyDB · BQ · etc.</text>
+
+          <!-- Metadata store label -->
+          <rect x="712" y="54" width="158" height="80" rx="8" fill="#f7f8fa" stroke="#e5e7eb" stroke-width="1.5"/>
+          <text x="791" y="82" text-anchor="middle" font-size="12" font-weight="600" fill="#1f2328">Metadata Store</text>
+          <text x="791" y="99" text-anchor="middle" font-size="10" fill="#57606a">Cloud Firestore / BigQuery</text>
+          <text x="791" y="115" text-anchor="middle" font-size="10" fill="#9ca3af">doc_id · source · timestamp</text>
+          <line x1="695" y1="94" x2="712" y2="94" stroke="#e5e7eb" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+          <!-- ── GCP ONLINE LANE ── -->
+          <rect x="10" y="175" width="878" height="192" rx="8" fill="#fff8e1" stroke="#fbbf24" stroke-width="1.5"/>
+          <text x="24" y="193" font-size="10" font-weight="700" fill="#b45309" letter-spacing="0.09em">GOOGLE CLOUD PLATFORM  —  QUERY TIME</text>
+
+          <!-- Client App -->
+          <rect x="24" y="204" width="140" height="60" rx="8" fill="#1a73e8"/>
+          <text x="94" y="230" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Client</text>
+          <text x="94" y="248" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Application</text>
+
+          <!-- Arrow: client → retriever -->
+          <line x1="164" y1="234" x2="198" y2="234" stroke="#1a73e8" stroke-width="2"/>
+          <polygon points="198,229 211,234 198,239" fill="#1a73e8"/>
+          <rect x="165" y="216" width="44" height="16" rx="4" fill="#e8f0fe"/>
+          <text x="187" y="228" text-anchor="middle" font-size="10" font-weight="600" fill="#1967d2">query</text>
+
+          <!-- Retriever -->
+          <rect x="211" y="204" width="140" height="60" rx="8" fill="#ffffff" stroke="#7c5cd8" stroke-width="2"/>
+          <text x="281" y="227" text-anchor="middle" font-size="12" font-weight="700" fill="#7c5cd8">Retriever</text>
+          <text x="281" y="243" text-anchor="middle" font-size="10" fill="#57606a">Cloud Run /</text>
+          <text x="281" y="257" text-anchor="middle" font-size="10" fill="#57606a">AI Agent Builder</text>
+
+          <!-- Arrow: retriever → vector DB -->
+          <line x1="351" y1="234" x2="385" y2="234" stroke="#7c5cd8" stroke-width="1.5"/>
+          <polygon points="385,229 398,234 385,239" fill="#7c5cd8"/>
+
+          <!-- Vector DB (query time) -->
+          <rect x="398" y="204" width="140" height="60" rx="8" fill="#fff8e1" stroke="#fbbf24" stroke-width="1.5"/>
+          <text x="468" y="230" text-anchor="middle" font-size="12" font-weight="700" fill="#b45309">Vector</text>
+          <text x="468" y="248" text-anchor="middle" font-size="12" font-weight="700" fill="#b45309">Database</text>
+
+          <!-- top-K return arrow -->
+          <line x1="398" y1="246" x2="351" y2="246" stroke="#34a853" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <polygon points="351,241 338,246 351,251" fill="#34a853"/>
+          <rect x="355" y="250" width="38" height="14" rx="4" fill="#e6f4ea"/>
+          <text x="374" y="261" text-anchor="middle" font-size="9" font-weight="600" fill="#137333">top-K</text>
+
+          <!-- Arrow: retriever → LLM (with context) -->
+          <line x1="211" y1="252" x2="211" y2="308" stroke="#7c5cd8" stroke-width="1.5"/>
+          <line x1="211" y1="308" x2="575" y2="308" stroke="#7c5cd8" stroke-width="1.5"/>
+          <polygon points="575,303 588,308 575,313" fill="#7c5cd8"/>
+          <rect x="330" y="292" width="120" height="16" rx="4" fill="#ede9fe"/>
+          <text x="390" y="304" text-anchor="middle" font-size="10" font-weight="600" fill="#6d28d9">prompt + context chunks</text>
+
+          <!-- LLM -->
+          <rect x="588" y="204" width="160" height="120" rx="8" fill="#ffffff" stroke="#fbbf24" stroke-width="1.5"/>
+          <text x="668" y="250" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328">Gemini API</text>
+          <text x="668" y="268" text-anchor="middle" font-size="11" fill="#57606a">Gemini Pro / Flash</text>
+          <text x="668" y="285" text-anchor="middle" font-size="10" fill="#9ca3af">generates grounded response</text>
+
+          <!-- Response arrow back -->
+          <line x1="588" y1="234" x2="556" y2="234" stroke="#34a853" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <line x1="556" y1="234" x2="556" y2="270" stroke="#34a853" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <line x1="556" y1="270" x2="164" y2="270" stroke="#34a853" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <polygon points="164,265 151,270 164,275" fill="#34a853"/>
+          <rect x="220" y="274" width="78" height="14" rx="4" fill="#e6f4ea"/>
+          <text x="259" y="285" text-anchor="middle" font-size="9" font-weight="600" fill="#137333">grounded response</text>
+
+          <!-- Observability bar -->
+          <rect x="760" y="204" width="118" height="120" rx="8" fill="#f7f8fa" stroke="#e5e7eb" stroke-width="1"/>
+          <text x="819" y="225" text-anchor="middle" font-size="11" font-weight="700" fill="#57606a">Observability</text>
+          <text x="819" y="244" text-anchor="middle" font-size="10" fill="#57606a">Cloud Logging</text>
+          <text x="819" y="260" text-anchor="middle" font-size="10" fill="#57606a">Cloud Monitoring</text>
+          <text x="819" y="276" text-anchor="middle" font-size="10" fill="#57606a">Cloud Trace</text>
+          <text x="819" y="292" text-anchor="middle" font-size="10" fill="#57606a">Gen AI Evaluation</text>
+          <text x="819" y="308" text-anchor="middle" font-size="10" fill="#57606a">(recall · faithfulness)</text>
+
+        </svg>
+      </div>
+
+      <div class="three-col" style="margin-top:16px;">
+        <div class="card">
+          <h3>Pros</h3>
+          <ul>
+            <li>Vector index is fully warm at launch</li>
+            <li>No ingestion latency at query time</li>
+            <li>Simpler query-path architecture</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Cons</h3>
+          <ul>
+            <li>Stale if source documents change</li>
+            <li>Requires re-ingestion workflow</li>
+            <li>Not suitable for user-specific docs</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>When to Use</h3>
+          <ul>
+            <li>Stable corpora (manuals, policies)</li>
+            <li>Shared knowledge across all users</li>
+            <li>Compliance-reviewed content only</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tab 2: Interactive / User-loaded ── -->
+    <div class="tab-panel" id="r2">
+      <p class="intro-text" style="margin-bottom:16px;">
+        The Client Application lets users upload documents at runtime. An asynchronous ingestion pipeline processes them in the background.
+        Documents are scoped to a user or session namespace in the vector database so retrievals remain tenant-isolated.
+      </p>
+      <div class="diagram-container">
+        <div class="diagram-title">Fig 2 — Interactive (User-Loaded) Knowledge Base</div>
+        <svg viewBox="0 0 940 430" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, system-ui, sans-serif">
+
+          <!-- ══ CUSTOMER ENV ══ -->
+          <rect x="10" y="10" width="155" height="410" rx="8" fill="#f0f7ff" stroke="#93c5fd" stroke-width="1.5"/>
+          <text x="26" y="28" font-size="10" font-weight="700" fill="#1d4ed8" letter-spacing="0.08em">CUSTOMER</text>
+
+          <!-- Client App -->
+          <rect x="22" y="42" width="130" height="76" rx="8" fill="#1a73e8"/>
+          <text x="87" y="74" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Client</text>
+          <text x="87" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Application</text>
+
+          <!-- ── upload doc arrow: Client → GCS (async path, y=80) ── -->
+          <line x1="152" y1="72" x2="220" y2="72" stroke="#1a73e8" stroke-width="2"/>
+          <polygon points="220,67 233,72 220,77" fill="#1a73e8"/>
+          <rect x="153" y="55" width="64" height="15" rx="4" fill="#e8f0fe"/>
+          <text x="185" y="67" text-anchor="middle" font-size="10" font-weight="600" fill="#1967d2">upload doc</text>
+
+          <!-- ── query arrow: Client → Retriever (query path, y=310) ── -->
+          <line x1="152" y1="310" x2="258" y2="310" stroke="#1a73e8" stroke-width="2"/>
+          <polygon points="258,305 271,310 258,315" fill="#1a73e8"/>
+          <rect x="153" y="293" width="50" height="15" rx="4" fill="#e8f0fe"/>
+          <text x="178" y="305" text-anchor="middle" font-size="10" font-weight="600" fill="#1967d2">query</text>
+
+          <!-- ── response arrow: LLM response back to Client (y=380) ── -->
+          <line x1="258" y1="380" x2="152" y2="380" stroke="#34a853" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <polygon points="152,375 139,380 152,385" fill="#34a853"/>
+          <rect x="153" y="363" width="84" height="15" rx="4" fill="#e6f4ea"/>
+          <text x="195" y="375" text-anchor="middle" font-size="9" font-weight="600" fill="#137333">grounded answer</text>
+
+          <!-- ══ GCP BOUNDARY ══ -->
+          <rect x="165" y="10" width="762" height="410" rx="8" fill="#fff8e1" stroke="#fbbf24" stroke-width="1.5"/>
+          <text x="181" y="28" font-size="10" font-weight="700" fill="#b45309" letter-spacing="0.09em">GOOGLE CLOUD PLATFORM</text>
+
+          <!-- ── ASYNC INGESTION PATH ── -->
+          <rect x="177" y="36" width="600" height="140" rx="6" fill="#f0f7ff" stroke="#93c5fd" stroke-width="1.2" stroke-dasharray="5 3"/>
+          <text x="191" y="52" font-size="10" font-weight="700" fill="#1d4ed8" letter-spacing="0.07em">ASYNC INGESTION PATH</text>
+
+          <!-- GCS Staging -->
+          <rect x="191" y="60" width="120" height="100" rx="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+          <text x="251" y="88" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">GCS Staging</text>
+          <text x="251" y="104" text-anchor="middle" font-size="10" fill="#57606a">Bucket</text>
+          <text x="251" y="120" text-anchor="middle" font-size="10" fill="#9ca3af">upload trigger</text>
+          <text x="251" y="136" text-anchor="middle" font-size="10" fill="#9ca3af">→ Pub/Sub event</text>
+          <text x="251" y="152" text-anchor="middle" font-size="10" fill="#9ca3af"> </text>
+
+          <!-- Arrow GCS → Chunker -->
+          <line x1="311" y1="110" x2="341" y2="110" stroke="#9ca3af" stroke-width="1.5"/>
+          <polygon points="341,105 354,110 341,115" fill="#9ca3af"/>
+
+          <!-- Chunker / Embedder -->
+          <rect x="354" y="60" width="145" height="100" rx="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+          <text x="427" y="88" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">Chunk &amp; Embed</text>
+          <text x="427" y="104" text-anchor="middle" font-size="10" fill="#57606a">Cloud Run / Dataflow</text>
+          <text x="427" y="120" text-anchor="middle" font-size="10" fill="#57606a">text-embedding-004 API</text>
+          <text x="427" y="136" text-anchor="middle" font-size="10" fill="#9ca3af">namespace = user_id</text>
+
+          <!-- Arrow Chunker → Vector DB write -->
+          <line x1="499" y1="110" x2="529" y2="110" stroke="#9ca3af" stroke-width="1.5"/>
+          <polygon points="529,105 542,110 529,115" fill="#9ca3af"/>
+
+          <!-- Vector DB (write) -->
+          <rect x="542" y="60" width="145" height="100" rx="8" fill="#fff8e1" stroke="#fbbf24" stroke-width="1.5"/>
+          <text x="615" y="84" text-anchor="middle" font-size="12" font-weight="700" fill="#b45309">Vector DB</text>
+          <text x="615" y="100" text-anchor="middle" font-size="10" fill="#57606a">(upsert vectors)</text>
+          <text x="615" y="116" text-anchor="middle" font-size="10" fill="#57606a">tenant namespace</text>
+          <text x="615" y="132" text-anchor="middle" font-size="10" fill="#9ca3af">Search · Vector Search</text>
+          <text x="615" y="148" text-anchor="middle" font-size="10" fill="#9ca3af">AlloyDB · pgvector</text>
+
+          <!-- ── SYNCHRONOUS QUERY PATH ── -->
+          <rect x="177" y="192" width="752" height="216" rx="6" fill="#f7fff7" stroke="#34a853" stroke-width="1.2" stroke-dasharray="5 3"/>
+          <text x="191" y="208" font-size="10" font-weight="700" fill="#137333" letter-spacing="0.07em">SYNCHRONOUS QUERY PATH</text>
+
+          <!-- Retriever -->
+          <rect x="258" y="218" width="145" height="64" rx="8" fill="#ffffff" stroke="#7c5cd8" stroke-width="2"/>
+          <text x="331" y="242" text-anchor="middle" font-size="12" font-weight="700" fill="#7c5cd8">Retriever</text>
+          <text x="331" y="258" text-anchor="middle" font-size="10" fill="#57606a">Cloud Run /</text>
+          <text x="331" y="272" text-anchor="middle" font-size="10" fill="#57606a">namespace filter</text>
+
+          <!-- Arrow: Retriever → Vector DB read -->
+          <line x1="403" y1="250" x2="445" y2="250" stroke="#7c5cd8" stroke-width="1.5"/>
+          <polygon points="445,245 458,250 445,255" fill="#7c5cd8"/>
+
+          <!-- Vector DB (read) -->
+          <rect x="458" y="218" width="145" height="64" rx="8" fill="#fff8e1" stroke="#fbbf24" stroke-width="1.5"/>
+          <text x="531" y="242" text-anchor="middle" font-size="12" font-weight="700" fill="#b45309">Vector DB</text>
+          <text x="531" y="258" text-anchor="middle" font-size="10" fill="#57606a">(ANN search)</text>
+          <text x="531" y="272" text-anchor="middle" font-size="10" fill="#9ca3af">namespace filter</text>
+
+          <!-- top-K return arrow -->
+          <line x1="458" y1="268" x2="403" y2="268" stroke="#34a853" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <polygon points="403,263 390,268 403,273" fill="#34a853"/>
+          <rect x="406" y="272" width="42" height="14" rx="4" fill="#e6f4ea"/>
+          <text x="427" y="283" text-anchor="middle" font-size="9" font-weight="600" fill="#137333">top-K</text>
+
+          <!-- Prompt Assembly -->
+          <rect x="258" y="316" width="145" height="72" rx="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+          <text x="331" y="342" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328">Prompt</text>
+          <text x="331" y="358" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328">Assembly</text>
+          <text x="331" y="374" text-anchor="middle" font-size="10" fill="#57606a">query + top-K chunks</text>
+
+          <!-- Arrow Retriever → Prompt Assembly -->
+          <line x1="331" y1="282" x2="331" y2="316" stroke="#7c5cd8" stroke-width="1.5"/>
+          <polygon points="326,316 331,303 336,316" fill="#7c5cd8"/>
+
+          <!-- Arrow Prompt → LLM -->
+          <line x1="403" y1="352" x2="458" y2="352" stroke="#1a73e8" stroke-width="2"/>
+          <polygon points="458,347 471,352 458,357" fill="#1a73e8"/>
+
+          <!-- LLM -->
+          <rect x="471" y="316" width="160" height="72" rx="8" fill="#ffffff" stroke="#fbbf24" stroke-width="1.5"/>
+          <text x="551" y="348" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328">Gemini API</text>
+          <text x="551" y="366" text-anchor="middle" font-size="11" fill="#57606a">Gemini Pro / Flash</text>
+
+          <!-- Response arrow: LLM → back along bottom → Client App -->
+          <line x1="471" y1="380" x2="258" y2="380" stroke="#34a853" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <polygon points="258,375 245,380 258,385" fill="#34a853"/>
+
+          <!-- Observability -->
+          <rect x="800" y="218" width="118" height="170" rx="8" fill="#f7f8fa" stroke="#e5e7eb" stroke-width="1"/>
+          <text x="859" y="238" text-anchor="middle" font-size="11" font-weight="700" fill="#57606a">Observability</text>
+          <text x="859" y="258" text-anchor="middle" font-size="10" fill="#57606a">Cloud Logging</text>
+          <text x="859" y="274" text-anchor="middle" font-size="10" fill="#57606a">Cloud Monitoring</text>
+          <text x="859" y="290" text-anchor="middle" font-size="10" fill="#57606a">Cloud Trace</text>
+          <text x="859" y="306" text-anchor="middle" font-size="10" fill="#57606a">Gen AI Evaluation</text>
+          <text x="859" y="322" text-anchor="middle" font-size="10" fill="#57606a">Ingestion lag</text>
+          <text x="859" y="338" text-anchor="middle" font-size="10" fill="#57606a">namespace quotas</text>
+
+        </svg>
+      </div>
+
+      <div class="three-col" style="margin-top:16px;">
+        <div class="card">
+          <h3>Pros</h3>
+          <ul>
+            <li>Users enrich context in real time</li>
+            <li>Tenant-isolated namespaces</li>
+            <li>No rebuild of full corpus</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Cons</h3>
+          <ul>
+            <li>Async lag before doc is retrievable</li>
+            <li>Namespace management overhead</li>
+            <li>Risk of PII in user-uploaded content</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>When to Use</h3>
+          <ul>
+            <li>Per-user or per-project workspaces</li>
+            <li>Dynamic document sets</li>
+            <li>Self-service knowledge platforms</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Next button -->
+    <div class="next-btn-row">
+      <a class="next-btn" href="#slide-2">Next &rarr;</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 2 — Architectural Decisions
+════════════════════════════════════════════ -->
+<section class="slide" id="slide-2">
+  <div class="slide-header">
+    <div>
+      <div class="eyebrow">RAG Pattern</div>
+      <h2>Architectural Decisions</h2>
+    </div>
+    <div class="gcp-badge">Google Cloud Platform</div>
+  </div>
+  <div class="slide-body">
+
+    <div class="decision-card">
+      <h3>1 · Vector Database — GCP Options</h3>
+      <p>Choose based on scale, existing stack, latency SLA, and operational overhead tolerance.</p>
+      <div class="options">
+        <span class="option-pill green">Vector Search — raw vector index infrastructure (ANN); you manage chunking, embedding, and retrieval logic; scales to billions of vectors; lowest latency</span>
+        <span class="option-pill green">Search — fully managed, turn-key search pipeline; Google handles chunking, embedding, indexing, and ranking on your private data; least ops overhead</span>
+        <span class="option-pill">AlloyDB for PostgreSQL — pgvector extension; relational + vector in one DB; good for hybrid SQL+semantic queries</span>
+        <span class="option-pill">Cloud Spanner — pgvector support; globally distributed; for globally consistent vector workloads</span>
+        <span class="option-pill">BigQuery — VECTOR_SEARCH function; analytics-scale retrieval; best when docs already in BQ</span>
+        <span class="option-pill purple">Cloud SQL (PostgreSQL) — pgvector; lowest cost entry point; limited to single-node scale</span>
+        <span class="option-pill warn">Self-managed on GKE — Weaviate, Qdrant, Milvus, Chroma; full control, full ops burden</span>
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <h3>2 · Embedding Model Selection</h3>
+      <p>The embedding model must be fixed for the lifecycle of the index — changing it requires full re-ingestion.</p>
+      <div class="options">
+        <span class="option-pill green">text-embedding-004 — Google's latest embedding model; 768-dim; strong multilingual performance; recommended default</span>
+        <span class="option-pill green">text-multilingual-embedding-002 — 768-dim; 100+ languages; use for multilingual corpora</span>
+        <span class="option-pill">textembedding-gecko — 768-dim; older generation; lower cost per token</span>
+        <span class="option-pill">Custom fine-tuned embedding model — domain-specific vocabulary (legal, medical, code)</span>
+        <span class="option-pill warn">Third-party (OpenAI, Cohere via API) — usable but adds external dependency and egress cost</span>
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <h3>3 · User-Loaded vs. Preloaded Knowledge Base</h3>
+      <p>Determines ingestion architecture complexity and namespace strategy.</p>
+      <div class="options">
+        <span class="option-pill green">Preloaded — single shared namespace; simpler ops; re-ingestion on content change</span>
+        <span class="option-pill">User-loaded (persistent) — per-user namespace; documents survive sessions; storage cost scales with users</span>
+        <span class="option-pill">User-loaded (session-scoped) — ephemeral namespace; auto-deleted after TTL; lower storage cost</span>
+        <span class="option-pill purple">Hybrid — shared base corpus + user-owned supplement namespaces; search merges both</span>
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <h3>4 · Asynchronous vs. Synchronous Document Ingestion</h3>
+      <p>Synchronous ingestion blocks the upload response until the doc is indexed; async decouples upload from retrieval availability.</p>
+      <div class="options">
+        <span class="option-pill green">Async (recommended) — GCS upload → Pub/Sub → Cloud Run worker → Vector DB; non-blocking; scalable</span>
+        <span class="option-pill">Async with Dataflow — large-scale batch or streaming ingestion; handles millions of docs</span>
+        <span class="option-pill warn">Synchronous — inline embed + upsert in the upload request; simple but adds latency and couples concerns</span>
+        <span class="option-pill">Cloud Workflows — orchestrate multi-step ingestion with retries, checkpointing, and visibility</span>
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <h3>5 · Updating the Vector Index</h3>
+      <p>Stale embeddings degrade retrieval quality. Choose an update strategy that matches how frequently source content changes.</p>
+      <div class="options">
+        <span class="option-pill green">Event-driven upsert — GCS / Firestore change events via Pub/Sub → incremental upsert of changed doc chunks only</span>
+        <span class="option-pill green">Scheduled full re-index — Cloud Scheduler triggers Dataflow job; safe for stable corpora; complete consistency</span>
+        <span class="option-pill">Delta ingestion — only new or modified documents since last run; use object versioning or change data capture</span>
+        <span class="option-pill">Soft delete + re-embed — mark old vectors inactive; embed new version; swap at query time via metadata filter</span>
+        <span class="option-pill warn">Manual re-index — operator-triggered; acceptable only for infrequently updated content</span>
+        <span class="option-pill purple">Dual-write during migration — write to both old and new index during embedding model upgrades</span>
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <h3>6 · Observability</h3>
+      <p>RAG quality is invisible without instrumentation at both the retrieval and generation layer.</p>
+      <div class="options">
+        <span class="option-pill green">Gen AI Evaluation Service — automated recall@K, faithfulness, and groundedness scoring</span>
+        <span class="option-pill green">Cloud Logging — log query, retrieved chunk IDs, and LLM response for offline audit</span>
+        <span class="option-pill green">Cloud Monitoring — p50/p95 retrieval latency, embedding throughput, ingestion lag dashboards</span>
+        <span class="option-pill">Cloud Trace / OpenTelemetry — distributed traces: query → retriever → vector DB → LLM</span>
+        <span class="option-pill">Retrieval quality metrics — precision@K, MRR, NDCG; measure with labelled test queries</span>
+        <span class="option-pill warn">Chunk-level feedback loop — user thumbs-up/down signals → label store → periodic embedding fine-tune</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 3 — GCP Vector DB Comparison
+════════════════════════════════════════════ -->
+<section class="slide" id="slide-3">
+  <div class="slide-header">
+    <div>
+      <div class="eyebrow">RAG Pattern</div>
+      <h2>GCP Vector Database Options — At a Glance</h2>
+    </div>
+    <div class="gcp-badge">Google Cloud Platform</div>
+  </div>
+  <div class="slide-body">
+
+    <div class="four-col">
+      <div class="card">
+        <h3>Vector Search</h3>
+        <ul>
+          <li>Raw ANN index infrastructure — you own the pipeline</li>
+          <li>You manage chunking, embedding calls, and upserts</li>
+          <li>Scales to billions of vectors; &lt;10 ms p99 latency</li>
+          <li>Supports batch + streaming upserts</li>
+          <li>Maximum flexibility and control</li>
+        </ul>
+        <p style="margin-top:10px; font-size:12px; color:#137333; font-weight:600;">✓ Best for: large-scale workloads needing full pipeline control</p>
+      </div>
+      <div class="card">
+        <h3>Search</h3>
+        <ul>
+          <li>Fully managed, turn-key search engine pipeline</li>
+          <li>Google manages chunking, embedding, indexing &amp; ranking</li>
+          <li>Operates on private enterprise data (not the open web)</li>
+          <li>Hybrid search (semantic + keyword) built in</li>
+          <li>Grounding API for Gemini; lowest ops overhead</li>
+        </ul>
+        <p style="margin-top:10px; font-size:12px; color:#137333; font-weight:600;">✓ Best for: fastest time-to-value RAG on private data</p>
+      </div>
+      <div class="card">
+        <h3>AlloyDB for PostgreSQL</h3>
+        <ul>
+          <li>pgvector extension (HNSW / IVFFlat)</li>
+          <li>Combines relational + vector queries</li>
+          <li>Supports hybrid SQL + cosine search</li>
+          <li>99.99% SLA, columnar engine</li>
+          <li>Good for existing Postgres workloads</li>
+        </ul>
+        <p style="margin-top:10px; font-size:12px; color:#1967d2; font-weight:600;">✓ Best for: hybrid SQL + semantic retrieval</p>
+      </div>
+      <div class="card">
+        <h3>BigQuery</h3>
+        <ul>
+          <li>VECTOR_SEARCH() SQL function</li>
+          <li>Embeddings stored as ARRAY columns</li>
+          <li>Scales to analytics-grade data volumes</li>
+          <li>Join with structured data in same query</li>
+          <li>Higher latency vs. dedicated vector DBs</li>
+        </ul>
+        <p style="margin-top:10px; font-size:12px; color:#1967d2; font-weight:600;">✓ Best for: analytics + RAG on same dataset</p>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3>Cloud Spanner + pgvector</h3>
+        <ul>
+          <li>Globally distributed, strongly consistent</li>
+          <li>pgvector interface for vector operations</li>
+          <li>Suits multi-region deployments with strict consistency</li>
+          <li>Higher cost; use only when global replication is required</li>
+        </ul>
+        <p style="margin-top:10px; font-size:12px; color:#6d28d9; font-weight:600;">✓ Best for: globally consistent vector workloads</p>
+      </div>
+      <div class="card">
+        <h3>Self-Managed on GKE (Weaviate / Qdrant / Milvus)</h3>
+        <ul>
+          <li>Full control over index type, distance metric, sharding</li>
+          <li>Supports advanced features: sparse+dense hybrid, multi-vector</li>
+          <li>Operator team owns upgrades, backups, HA</li>
+          <li>GKE Autopilot reduces node management overhead</li>
+        </ul>
+        <p style="margin-top:10px; font-size:12px; color:#c5221f; font-weight:600;">⚠ Best for: specialised requirements, not default choice</p>
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <h3>Selection Summary</h3>
+      <p>Start with Search for fastest delivery — Google manages the full pipeline on your private data. Move to Vector Search when you need raw index control, sub-10 ms latency at billion-vector scale, or a custom retrieval pipeline. Use AlloyDB when you need relational joins alongside semantic search.</p>
+      <div class="options">
+        <span class="option-pill green">Fastest time-to-value → Search (fully managed pipeline)</span>
+        <span class="option-pill green">Large scale, custom pipeline → Vector Search (raw ANN index)</span>
+        <span class="option-pill">Relational + vector → AlloyDB pgvector</span>
+        <span class="option-pill">Analytics + RAG → BigQuery VECTOR_SEARCH</span>
+        <span class="option-pill purple">Global consistency → Cloud Spanner pgvector</span>
+        <span class="option-pill warn">Full control needed → Self-managed on GKE</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /.deck -->
+
+<footer>
+  <span style="border-top: 1px solid #e5e7eb; display: inline-block; padding-top: 10px; color: #57606a; font-size: 12px;">Made with IBM Bob</span>
+</footer>
+
+<script>
+  function showTab(id) {
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+</script>
+</body>
+</html>
