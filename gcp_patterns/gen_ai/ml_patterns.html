@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GCP Pattern: Machine Learning</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 15px; line-height: 1.6;
+    background: #f0f2f5; color: #1f2328;
+  }
+
+  .deck { display: flex; flex-direction: column; gap: 0; }
+
+  .slide {
+    width: 100%; min-height: 100vh;
+    background: #ffffff; display: flex; flex-direction: column;
+    border-bottom: 4px solid #e5e7eb; page-break-after: always;
+  }
+
+  .slide-header {
+    background: #1a73e8; color: #ffffff;
+    padding: 28px 48px 22px; display: flex; align-items: flex-end; gap: 16px;
+  }
+  .slide-header .eyebrow {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    opacity: 0.75; margin-bottom: 4px;
+  }
+  .slide-header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.3px; }
+  .slide-header h2 { font-size: 20px; font-weight: 600; }
+  .slide-header .gcp-badge {
+    margin-left: auto; background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3); border-radius: 6px;
+    padding: 4px 12px; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.05em; white-space: nowrap; align-self: center;
+  }
+
+  .slide-body {
+    flex: 1; padding: 32px 48px 36px;
+    display: flex; flex-direction: column; gap: 24px;
+  }
+
+  .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .card {
+    background: #f7f8fa; border: 1px solid #e5e7eb;
+    border-radius: 8px; padding: 20px 22px;
+  }
+  .card h3 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #1a73e8; margin-bottom: 10px;
+  }
+  .card ul { padding-left: 18px; }
+  .card ul li { font-size: 13.5px; margin-bottom: 5px; color: #1f2328; }
+
+  .decision-card {
+    background: #f7f8fa; border: 1px solid #e5e7eb;
+    border-left: 4px solid #1a73e8; border-radius: 8px; padding: 16px 20px;
+  }
+  .decision-card h3 { font-size: 14px; font-weight: 700; color: #1f2328; margin-bottom: 6px; }
+  .decision-card p  { font-size: 13px; color: #57606a; margin-bottom: 8px; }
+  .decision-card .options { display: flex; gap: 8px; flex-wrap: wrap; }
+  .option-pill {
+    background: #e8f0fe; color: #1a73e8;
+    border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 600;
+  }
+  .option-pill.warn   { background: #fce8e6; color: #c5221f; }
+  .option-pill.green  { background: #e6f4ea; color: #137333; }
+  .option-pill.purple { background: #ede9fe; color: #6d28d9; }
+  .option-pill.yellow { background: #fef9c3; color: #854d0e; }
+
+  .intro-text { font-size: 15px; color: #1f2328; line-height: 1.7; max-width: 860px; }
+
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .tag {
+    background: #e8f0fe; color: #1967d2;
+    border-radius: 4px; padding: 3px 10px; font-size: 12px; font-weight: 600;
+  }
+  .section-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: #57606a; margin-bottom: 4px;
+  }
+
+  .diagram-container {
+    background: #f7f8fa; border: 1px solid #e5e7eb;
+    border-radius: 8px; padding: 20px 24px 16px;
+  }
+  .diagram-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.09em; color: #57606a; margin-bottom: 14px;
+  }
+  .diagram-container svg { display: block; width: 100%; }
+
+  .tab-bar {
+    display: flex; gap: 0;
+    border-bottom: 2px solid #e5e7eb; margin-bottom: 20px;
+  }
+  .tab-btn {
+    padding: 10px 22px; font-size: 13px; font-weight: 600;
+    color: #57606a; background: none; border: none;
+    border-bottom: 3px solid transparent; margin-bottom: -2px;
+    cursor: pointer; transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: #1a73e8; }
+  .tab-btn.active { color: #1a73e8; border-bottom-color: #1a73e8; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .next-btn-row { display: flex; justify-content: flex-end; padding-top: 8px; }
+  .next-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #1a73e8; color: #ffffff; border: none;
+    border-radius: 8px; padding: 10px 24px;
+    font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none;
+  }
+  .next-btn:hover { background: #1557b0; }
+
+  footer {
+    text-align: center; padding: 18px; font-size: 12px; color: #57606a;
+    border-top: 1px solid #e5e7eb; background: #ffffff;
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 1 — Overview + Tabbed Diagrams
+════════════════════════════════════════════ -->
+<section class="slide" id="slide-1">
+  <div class="slide-header">
+    <div>
+      <div class="eyebrow">GCP Architecture Patterns · Machine Learning</div>
+      <h1>ML Patterns on GCP</h1>
+    </div>
+    <div class="gcp-badge">Google Cloud Platform</div>
+  </div>
+  <div class="slide-body">
+
+    <p class="intro-text">
+      GCP provides an integrated ML platform spanning data exploration, model development, training, evaluation, and inference.
+      Agent Studio (Colab Enterprise notebooks) sits at the centre of the interactive development workflow, connecting directly to BigQuery, Cloud Storage, and managed training infrastructure.
+    </p>
+
+    <div>
+      <div class="section-label">Key GCP ML Services</div>
+      <div class="tag-row">
+        <span class="tag">Agent Studio (Colab Enterprise)</span>
+        <span class="tag">AutoML</span>
+        <span class="tag">Custom Training (GPUs / TPUs)</span>
+        <span class="tag">Model Registry</span>
+        <span class="tag">Model Monitoring</span>
+        <span class="tag">Pipelines</span>
+        <span class="tag">BigQuery ML</span>
+        <span class="tag">Feature Store</span>
+        <span class="tag">Batch Prediction</span>
+        <span class="tag">Online Prediction Endpoints</span>
+      </div>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:0;" />
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showTab('ml1', this)">Diagram 1 · Data Exploration &amp; Model Building</button>
+      <button class="tab-btn" onclick="showTab('ml2', this)">Diagram 2 · ML Inference (Batch &amp; Real-Time)</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         TAB 1 — Data Exploration + Model Build
+    ════════════════════════════════════════ -->
+    <div class="tab-panel active" id="ml1">
+      <p class="intro-text" style="margin-bottom:14px;">
+        Data scientists use Agent Studio (Colab Enterprise notebooks) to explore data, engineer features, and train models.
+        Data flows from BigQuery, Cloud Storage, and streaming sources. Trained models are registered and deployed from the same platform.
+      </p>
+      <div class="diagram-container">
+        <div class="diagram-title">Fig 1 — Data Exploration &amp; ML Model Building</div>
+        <svg viewBox="0 0 920 380" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, system-ui, sans-serif">
+
+          <!-- ══ DATA SOURCES ══ -->
+          <rect x="10" y="10" width="158" height="360" rx="8" fill="#f0f7ff" stroke="#93c5fd" stroke-width="1.5"/>
+          <text x="89" y="28" text-anchor="middle" font-size="10" font-weight="700" fill="#1d4ed8" letter-spacing="0.08em">DATA SOURCES</text>
+
+          <rect x="22" y="38" width="134" height="44" rx="6" fill="#1a73e8"/>
+          <text x="89" y="56" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">BigQuery</text>
+          <text x="89" y="70" text-anchor="middle" font-size="10" fill="#c7d9f8">structured · analytics</text>
+
+          <rect x="22" y="93" width="134" height="44" rx="6" fill="#1a73e8"/>
+          <text x="89" y="111" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">Cloud Storage</text>
+          <text x="89" y="125" text-anchor="middle" font-size="10" fill="#c7d9f8">files · images · CSVs</text>
+
+          <rect x="22" y="148" width="134" height="44" rx="6" fill="#1a73e8"/>
+          <text x="89" y="166" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">Cloud Spanner</text>
+          <text x="89" y="180" text-anchor="middle" font-size="10" fill="#c7d9f8">transactional data</text>
+
+          <rect x="22" y="203" width="134" height="44" rx="6" fill="#1a73e8"/>
+          <text x="89" y="221" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">Pub/Sub</text>
+          <text x="89" y="235" text-anchor="middle" font-size="10" fill="#c7d9f8">streaming events</text>
+
+          <rect x="22" y="258" width="134" height="44" rx="6" fill="#1a73e8"/>
+          <text x="89" y="276" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">Bigtable</text>
+          <text x="89" y="290" text-anchor="middle" font-size="10" fill="#c7d9f8">time-series · wide rows</text>
+
+          <rect x="22" y="313" width="134" height="44" rx="6" fill="#1a73e8"/>
+          <text x="89" y="331" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">External / APIs</text>
+          <text x="89" y="345" text-anchor="middle" font-size="10" fill="#c7d9f8">REST · on-premises DB</text>
+
+          <!-- data sources → agent studio -->
+          <line x1="168" y1="185" x2="204" y2="185" stroke="#93c5fd" stroke-width="1.5"/>
+          <polygon points="204,180 205,185 204,190" fill="#93c5fd"/>
+
+          <!-- ══ GCP PLATFORM ══ -->
+          <rect x="178" y="10" width="732" height="360" rx="8" fill="#fff8e1" stroke="#f9ab00" stroke-width="1.5"/>
+          <text x="544" y="26" text-anchor="middle" font-size="10" font-weight="700" fill="#b45309" letter-spacing="0.09em">GOOGLE CLOUD PLATFORM</text>
+
+          <!-- ── AGENT STUDIO ── -->
+          <rect x="192" y="36" width="200" height="314" rx="8" fill="#ede9fe" stroke="#7c5cd8" stroke-width="2"/>
+          <text x="292" y="56" text-anchor="middle" font-size="12" font-weight="700" fill="#6d28d9">Agent Studio</text>
+          <text x="292" y="72" text-anchor="middle" font-size="10" fill="#6d28d9">Colab Enterprise Notebooks</text>
+
+          <!-- notebook sub-boxes -->
+          <rect x="204" y="84" width="176" height="38" rx="6" fill="#ffffff" stroke="#c4b5fd" stroke-width="1"/>
+          <text x="292" y="100" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">Data Exploration</text>
+          <text x="292" y="114" text-anchor="middle" font-size="10" fill="#57606a">pandas · BigQuery client · SQL</text>
+
+          <rect x="204" y="133" width="176" height="38" rx="6" fill="#ffffff" stroke="#c4b5fd" stroke-width="1"/>
+          <text x="292" y="149" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">Feature Engineering</text>
+          <text x="292" y="163" text-anchor="middle" font-size="10" fill="#57606a">transforms · encoding · scaling</text>
+
+          <rect x="204" y="182" width="176" height="38" rx="6" fill="#ffffff" stroke="#c4b5fd" stroke-width="1"/>
+          <text x="292" y="198" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">Model Prototyping</text>
+          <text x="292" y="212" text-anchor="middle" font-size="10" fill="#57606a">scikit-learn · PyTorch · XGBoost</text>
+
+          <rect x="204" y="231" width="176" height="38" rx="6" fill="#ffffff" stroke="#c4b5fd" stroke-width="1"/>
+          <text x="292" y="247" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">Experiment Tracking</text>
+          <text x="292" y="261" text-anchor="middle" font-size="10" fill="#57606a">Experiments · MLflow</text>
+
+          <rect x="204" y="280" width="176" height="38" rx="6" fill="#ffffff" stroke="#c4b5fd" stroke-width="1"/>
+          <text x="292" y="296" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">BigQuery ML</text>
+          <text x="292" y="310" text-anchor="middle" font-size="10" fill="#57606a">CREATE MODEL · SQL-native</text>
+
+          <!-- studio → training arrow -->
+          <line x1="392" y1="193" x2="428" y2="193" stroke="#7c5cd8" stroke-width="2"/>
+          <polygon points="428,188 429,193 428,198" fill="#7c5cd8"/>
+
+          <!-- ── TRAINING ── -->
+          <rect x="430" y="36" width="180" height="172" rx="8" fill="#e6f4ea" stroke="#34a853" stroke-width="1.5"/>
+          <text x="520" y="56" text-anchor="middle" font-size="12" font-weight="700" fill="#137333">Training</text>
+
+          <rect x="442" y="66" width="156" height="34" rx="6" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+          <text x="520" y="81" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">Custom Training</text>
+          <text x="520" y="94" text-anchor="middle" font-size="10" fill="#57606a">GPU / TPU · containers</text>
+
+          <rect x="442" y="111" width="156" height="34" rx="6" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+          <text x="520" y="126" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">AutoML</text>
+          <text x="520" y="139" text-anchor="middle" font-size="10" fill="#57606a">tabular · vision · text · video</text>
+
+          <rect x="442" y="156" width="156" height="40" rx="6" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+          <text x="520" y="172" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">Pipelines</text>
+          <text x="520" y="186" text-anchor="middle" font-size="10" fill="#57606a">reproducible · CI/CD for ML</text>
+
+          <!-- training → feature store arrow (vertical, down) -->
+          <line x1="520" y1="208" x2="520" y2="228" stroke="#34a853" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <polygon points="515,228 520,229 525,228" fill="#34a853"/>
+
+          <!-- ── FEATURE STORE ── -->
+          <rect x="430" y="230" width="180" height="50" rx="8" fill="#e8f0fe" stroke="#93c5fd" stroke-width="1.5"/>
+          <text x="520" y="252" text-anchor="middle" font-size="12" font-weight="700" fill="#1967d2">Feature Store</text>
+          <text x="520" y="268" text-anchor="middle" font-size="10" fill="#57606a">online · offline · versioned</text>
+
+          <!-- training → model registry arrow -->
+          <line x1="610" y1="193" x2="646" y2="193" stroke="#34a853" stroke-width="1.5"/>
+          <polygon points="646,188 647,193 646,198" fill="#34a853"/>
+
+          <!-- ── MODEL REGISTRY + EVAL ── -->
+          <rect x="648" y="36" width="248" height="172" rx="8" fill="#f7f8fa" stroke="#e5e7eb" stroke-width="1.5"/>
+          <text x="772" y="56" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328">Evaluate &amp; Register</text>
+
+          <rect x="660" y="66" width="224" height="38" rx="6" fill="#fef9c3" stroke="#f9ab00" stroke-width="1"/>
+          <text x="772" y="82" text-anchor="middle" font-size="11" font-weight="700" fill="#854d0e">Model Evaluation</text>
+          <text x="772" y="96" text-anchor="middle" font-size="10" fill="#57606a">metrics · confusion matrix · slicing</text>
+
+          <rect x="660" y="115" width="224" height="38" rx="6" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+          <text x="772" y="131" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">Model Registry</text>
+          <text x="772" y="145" text-anchor="middle" font-size="10" fill="#57606a">versioning · lineage · aliases</text>
+
+          <rect x="660" y="164" width="224" height="32" rx="6" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+          <text x="772" y="180" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">Model Monitoring</text>
+          <text x="772" y="193" text-anchor="middle" font-size="10" fill="#57606a">drift · skew · alerts</text>
+
+          <!-- registry → deployment (down arrow) -->
+          <line x1="772" y1="208" x2="772" y2="228" stroke="#9ca3af" stroke-width="1.5"/>
+          <polygon points="767,228 772,229 777,228" fill="#9ca3af"/>
+
+          <!-- ── DEPLOYMENT ── -->
+          <rect x="648" y="230" width="248" height="106" rx="8" fill="#fff8e1" stroke="#f9ab00" stroke-width="1.5"/>
+          <text x="772" y="250" text-anchor="middle" font-size="12" font-weight="700" fill="#b45309">Deployment</text>
+
+          <rect x="660" y="260" width="104" height="34" rx="6" fill="#ffffff" stroke="#f9ab00" stroke-width="1"/>
+          <text x="712" y="275" text-anchor="middle" font-size="11" font-weight="700" fill="#b45309">Online</text>
+          <text x="712" y="288" text-anchor="middle" font-size="10" fill="#57606a">Endpoint · REST</text>
+
+          <rect x="774" y="260" width="110" height="34" rx="6" fill="#ffffff" stroke="#f9ab00" stroke-width="1"/>
+          <text x="829" y="275" text-anchor="middle" font-size="11" font-weight="700" fill="#b45309">Batch</text>
+          <text x="829" y="288" text-anchor="middle" font-size="10" fill="#57606a">Prediction job</text>
+
+          <rect x="660" y="304" width="224" height="24" rx="6" fill="#f7f8fa" stroke="#e5e7eb" stroke-width="1"/>
+          <text x="772" y="320" text-anchor="middle" font-size="10" fill="#57606a">Explainability · A/B testing · Shadow mode</text>
+
+        </svg>
+      </div>
+
+      <div class="three-col" style="margin-top:14px;">
+        <div class="card">
+          <h3>Agent Studio Capabilities</h3>
+          <ul>
+            <li>Managed Jupyter notebooks — no infra to provision</li>
+            <li>Native BigQuery integration — query directly in cells</li>
+            <li>Access to GPU / TPU runtimes for training</li>
+            <li>Integrated with Experiments for run tracking</li>
+            <li>Shareable, version-controlled environments</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Data Prep Best Practices</h3>
+          <ul>
+            <li>Use BigQuery for SQL-based feature engineering at scale</li>
+            <li>Store offline features in Feature Store for training/serving consistency</li>
+            <li>Export to GCS in Parquet before large training jobs</li>
+            <li>Version datasets alongside model versions</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Model Development Workflow</h3>
+          <ul>
+            <li>Prototype in notebook → productionise with Pipelines</li>
+            <li>Use AutoML as a baseline before custom training</li>
+            <li>Track every experiment; compare metrics in Model Registry</li>
+            <li>Evaluate on held-out and sliced data before registration</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         TAB 2 — ML Inference
+    ════════════════════════════════════════ -->
+    <div class="tab-panel" id="ml2">
+      <p class="intro-text" style="margin-bottom:14px;">
+        ML inference runs in two modes. Batch prediction processes large datasets asynchronously and stores results in BigQuery for downstream consumption.
+        Real-time prediction exposes a managed endpoint that client applications invoke synchronously with low latency.
+      </p>
+      <div class="diagram-container">
+        <div class="diagram-title">Fig 2 — ML Inference: Batch &amp; Real-Time</div>
+        <svg viewBox="0 0 920 400" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, system-ui, sans-serif">
+
+          <!-- ══ GCP PLATFORM boundary ══ -->
+          <rect x="10" y="10" width="900" height="380" rx="8" fill="#fff8e1" stroke="#f9ab00" stroke-width="1.5"/>
+          <text x="460" y="26" text-anchor="middle" font-size="10" font-weight="700" fill="#b45309" letter-spacing="0.09em">GOOGLE CLOUD PLATFORM</text>
+
+          <!-- ── MODEL REGISTRY (shared, centre top) ── -->
+          <rect x="350" y="38" width="220" height="52" rx="8" fill="#f7f8fa" stroke="#e5e7eb" stroke-width="1.5"/>
+          <text x="460" y="60" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328">Model Registry</text>
+          <text x="460" y="76" text-anchor="middle" font-size="10" fill="#57606a">versioned · promoted to staging / prod</text>
+
+          <!-- registry → batch endpoint (down-left) -->
+          <line x1="390" y1="90" x2="280" y2="118" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <polygon points="278,113 279,119 284,116" fill="#9ca3af"/>
+
+          <!-- registry → online endpoint (down-right) -->
+          <line x1="530" y1="90" x2="640" y2="118" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <polygon points="636,113 641,119 643,113" fill="#9ca3af"/>
+
+          <!-- ══ BATCH LANE ══ -->
+          <rect x="22" y="108" width="420" height="262" rx="8" fill="#f0f7ff" stroke="#93c5fd" stroke-width="1.5"/>
+          <text x="232" y="126" text-anchor="middle" font-size="10" font-weight="700" fill="#1d4ed8" letter-spacing="0.07em">BATCH INFERENCE PATH</text>
+
+          <!-- Input data -->
+          <rect x="34" y="138" width="140" height="52" rx="6" fill="#1a73e8"/>
+          <text x="104" y="160" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Input Data</text>
+          <text x="104" y="175" text-anchor="middle" font-size="10" fill="#c7d9f8">BigQuery table</text>
+          <text x="104" y="186" text-anchor="middle" font-size="10" fill="#c7d9f8">or GCS files</text>
+
+          <!-- Input → Batch Job -->
+          <line x1="174" y1="164" x2="210" y2="164" stroke="#93c5fd" stroke-width="1.5"/>
+          <polygon points="210,159 211,164 210,169" fill="#93c5fd"/>
+
+          <!-- Batch Prediction Job -->
+          <rect x="212" y="138" width="160" height="52" rx="6" fill="#e6f4ea" stroke="#34a853" stroke-width="1.5"/>
+          <text x="292" y="158" text-anchor="middle" font-size="12" font-weight="700" fill="#137333">Batch Prediction</text>
+          <text x="292" y="173" text-anchor="middle" font-size="10" fill="#57606a">managed job · auto-scale</text>
+          <text x="292" y="184" text-anchor="middle" font-size="10" fill="#57606a">Cloud Scheduler trigger</text>
+
+          <!-- Batch Job → BigQuery results -->
+          <line x1="292" y1="190" x2="292" y2="218" stroke="#34a853" stroke-width="1.5"/>
+          <polygon points="287,218 292,219 297,218" fill="#34a853"/>
+
+          <!-- BigQuery results box -->
+          <rect x="212" y="220" width="160" height="52" rx="6" fill="#fff8e1" stroke="#f9ab00" stroke-width="1.5"/>
+          <text x="292" y="240" text-anchor="middle" font-size="12" font-weight="700" fill="#b45309">BigQuery</text>
+          <text x="292" y="255" text-anchor="middle" font-size="10" fill="#57606a">predictions table</text>
+          <text x="292" y="266" text-anchor="middle" font-size="10" fill="#57606a">partitioned by run_date</text>
+
+          <!-- BQ → Batch consumers -->
+          <line x1="292" y1="272" x2="292" y2="300" stroke="#f9ab00" stroke-width="1.5"/>
+          <polygon points="287,300 292,301 297,300" fill="#f9ab00"/>
+
+          <!-- Batch consumer boxes -->
+          <rect x="34" y="302" width="116" height="42" rx="6" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+          <text x="92" y="320" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">Looker Studio</text>
+          <text x="92" y="334" text-anchor="middle" font-size="10" fill="#57606a">BI dashboards</text>
+
+          <rect x="160" y="302" width="116" height="42" rx="6" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+          <text x="218" y="320" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">Downstream</text>
+          <text x="218" y="334" text-anchor="middle" font-size="10" fill="#57606a">Apps / Pipelines</text>
+
+          <rect x="286" y="302" width="116" height="42" rx="6" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+          <text x="344" y="320" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">Data Exports</text>
+          <text x="344" y="334" text-anchor="middle" font-size="10" fill="#57606a">GCS · Pub/Sub</text>
+
+          <!-- connect BQ to side consumers -->
+          <line x1="212" y1="247" x2="150" y2="247" stroke="#f9ab00" stroke-width="1" stroke-dasharray="3 2"/>
+          <line x1="150" y1="247" x2="150" y2="323" stroke="#f9ab00" stroke-width="1" stroke-dasharray="3 2"/>
+          <polygon points="145,323 150,324 155,323" fill="#f9ab00"/>
+
+          <line x1="372" y1="247" x2="402" y2="247" stroke="#f9ab00" stroke-width="1" stroke-dasharray="3 2"/>
+          <line x1="402" y1="247" x2="402" y2="323" stroke="#f9ab00" stroke-width="1" stroke-dasharray="3 2"/>
+          <polygon points="397,323 402,324 407,323" fill="#f9ab00"/>
+
+          <!-- ══ REAL-TIME LANE ══ -->
+          <rect x="478" y="108" width="420" height="262" rx="8" fill="#f7fff7" stroke="#34a853" stroke-width="1.5"/>
+          <text x="688" y="126" text-anchor="middle" font-size="10" font-weight="700" fill="#137333" letter-spacing="0.07em">REAL-TIME INFERENCE PATH</text>
+
+          <!-- Online Endpoint — centred horizontally in lane, leaving room on right for Feature Store -->
+          <rect x="492" y="138" width="220" height="64" rx="8" fill="#e6f4ea" stroke="#34a853" stroke-width="2"/>
+          <text x="602" y="160" text-anchor="middle" font-size="13" font-weight="700" fill="#137333">Online Prediction</text>
+          <text x="602" y="176" text-anchor="middle" font-size="11" font-weight="700" fill="#137333">Endpoint</text>
+          <text x="602" y="192" text-anchor="middle" font-size="10" fill="#9ca3af">REST API · gRPC · &lt;100ms p99</text>
+
+          <!-- Endpoint → Feature Store (horizontal arrow to the right) -->
+          <line x1="712" y1="165" x2="748" y2="165" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <polygon points="748,160 749,165 748,170" fill="#93c5fd"/>
+
+          <!-- Feature Store (online) — right side of lane -->
+          <rect x="750" y="138" width="136" height="64" rx="6" fill="#e8f0fe" stroke="#93c5fd" stroke-width="1.5"/>
+          <text x="818" y="159" text-anchor="middle" font-size="11" font-weight="700" fill="#1967d2">Feature Store</text>
+          <text x="818" y="174" text-anchor="middle" font-size="10" fill="#57606a">(online serving)</text>
+          <text x="818" y="189" text-anchor="middle" font-size="10" fill="#9ca3af">low-latency lookup</text>
+
+          <!-- Single client applications box -->
+          <rect x="492" y="296" width="396" height="58" rx="8" fill="#1a73e8"/>
+          <text x="690" y="320" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Client Applications</text>
+          <text x="690" y="337" text-anchor="middle" font-size="10" fill="#c7d9f8">Web / Mobile · CRM · ERP · Microservices · Other Applications</text>
+
+          <!-- client → endpoint: single arrow up to endpoint bottom centre -->
+          <line x1="602" y1="296" x2="602" y2="203" stroke="#1a73e8" stroke-width="2"/>
+          <polygon points="597,203 602,202 607,203" fill="#1a73e8"/>
+
+          <!-- response: dashed green arrow back down -->
+          <line x1="614" y1="203" x2="614" y2="296" stroke="#34a853" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <polygon points="609,296 614,297 619,296" fill="#34a853"/>
+
+          <!-- request / response labels -->
+          <rect x="618" y="234" width="54" height="14" rx="4" fill="#e8f0fe"/>
+          <text x="645" y="245" text-anchor="middle" font-size="9" font-weight="600" fill="#1967d2">request</text>
+          <rect x="560" y="253" width="56" height="14" rx="4" fill="#e6f4ea"/>
+          <text x="588" y="264" text-anchor="middle" font-size="9" font-weight="600" fill="#137333">prediction</text>
+
+        </svg>
+      </div>
+
+      <div class="three-col" style="margin-top:14px;">
+        <div class="card">
+          <h3>Batch Inference</h3>
+          <ul>
+            <li>Triggered by Cloud Scheduler or Pipelines step</li>
+            <li>Input: BigQuery table or GCS file export</li>
+            <li>Results written to BigQuery partitioned by run date</li>
+            <li>Consumed by BI dashboards, downstream pipelines, data exports</li>
+            <li>Cost-efficient — pay per prediction job, no idle endpoint</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Real-Time Inference</h3>
+          <ul>
+            <li>Managed endpoint — automatic scaling to zero or min replicas</li>
+            <li>REST and gRPC supported; &lt;100ms p99 for most tabular models</li>
+            <li>Online Feature Store lookup for consistent features at serving time</li>
+            <li>Traffic splitting for A/B tests and canary rollouts</li>
+            <li>Dedicated endpoints for throughput isolation</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>When to Use Each</h3>
+          <ul>
+            <li><strong>Batch</strong> — nightly scoring, fraud risk reports, churn propensity, recommendations pre-compute</li>
+            <li><strong>Real-time</strong> — fraud detection at transaction time, personalisation, content ranking, price optimisation</li>
+            <li><strong>Hybrid</strong> — batch for population scoring + real-time for individual overrides</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="next-btn-row">
+      <a class="next-btn" href="#slide-2">Architecture Considerations &rarr;</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 2 — Architecture Considerations
+════════════════════════════════════════════ -->
+<section class="slide" id="slide-2">
+  <div class="slide-header">
+    <div>
+      <div class="eyebrow">ML Patterns · GCP</div>
+      <h2>Architecture Considerations</h2>
+    </div>
+    <div class="gcp-badge">Google Cloud Platform</div>
+  </div>
+  <div class="slide-body">
+
+    <div class="decision-card">
+      <h3>Data &amp; Feature Management</h3>
+      <p>Training–serving skew is one of the most common causes of production model degradation. Feature Store eliminates it by sharing feature definitions between training and serving.</p>
+      <div class="options">
+        <span class="option-pill green">Feature Store — define features once; use in training (offline) and serving (online) consistently</span>
+        <span class="option-pill green">Dataset versioning — snapshot training data with timestamps; link dataset version to model version</span>
+        <span class="option-pill">BigQuery as offline store — query features at point-in-time using FOR SYSTEM_TIME AS OF</span>
+        <span class="option-pill">Dataflow for feature pipelines — compute and backfill features at scale; write to Feature Store</span>
+        <span class="option-pill warn">Training–serving skew — validate that online feature values match training distribution before launch</span>
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <h3>Training Infrastructure</h3>
+      <p>Match compute to model complexity. Use managed notebooks for exploration; move to reproducible Pipelines for production training runs.</p>
+      <div class="options">
+        <span class="option-pill green">Agent Studio notebooks — fast iteration; GPU runtimes; direct BigQuery access</span>
+        <span class="option-pill green">Pipelines — reproducible, version-controlled training DAGs; CI/CD for ML</span>
+        <span class="option-pill purple">Custom Training — bring your own container; full framework control; A100 / TPU v4 available</span>
+        <span class="option-pill purple">AutoML — strong baseline; no code required; good for tabular, image, text, video</span>
+        <span class="option-pill">Distributed training — multi-node GPU via MirroredStrategy / Reduction Server for large models</span>
+        <span class="option-pill yellow">Spot / preemptible VMs — up to 80% cost reduction for fault-tolerant training jobs</span>
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <h3>Model Deployment &amp; Serving</h3>
+      <p>Choose serving strategy based on latency requirements, traffic volume, and cost tolerance.</p>
+      <div class="options">
+        <span class="option-pill green">Online Endpoint — REST/gRPC; autoscaling; traffic splits; &lt;100ms; pay per request</span>
+        <span class="option-pill green">Batch Prediction — async; no idle cost; results in BigQuery; best for large-scale scoring</span>
+        <span class="option-pill purple">Dedicated Endpoint — reserved capacity; no cold start; use for latency-critical production traffic</span>
+        <span class="option-pill">Model versions &amp; aliases — promote candidate → staging → prod without downtime; rollback in seconds</span>
+        <span class="option-pill">Explainability — Shapley values and integrated gradients; required for regulated use cases</span>
+        <span class="option-pill warn">Shadow mode — run new model in parallel to production; compare outputs without user impact</span>
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <h3>MLOps &amp; Monitoring</h3>
+      <p>Models degrade silently. Instrument every inference call; monitor data drift and prediction drift independently.</p>
+      <div class="options">
+        <span class="option-pill green">Model Monitoring — scheduled drift detection on prediction inputs vs. training baseline</span>
+        <span class="option-pill green">Experiments — track hyperparameters, metrics, and artefacts for every training run</span>
+        <span class="option-pill green">Pipelines CI/CD — trigger retraining on data drift alert or scheduled cadence</span>
+        <span class="option-pill">Cloud Logging — log every prediction request + response for audit and debugging</span>
+        <span class="option-pill">Cloud Monitoring — endpoint latency p50/p95/p99, error rate, request volume dashboards</span>
+        <span class="option-pill warn">Data drift alerts — set thresholds on Jensen-Shannon divergence for feature distributions</span>
+        <span class="option-pill purple">Lineage tracking — trace model back to dataset version, pipeline run, and training code commit</span>
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <h3>Security &amp; Governance</h3>
+      <p>ML workloads handle sensitive training data and model artefacts. Apply the same data security controls as production databases.</p>
+      <div class="options">
+        <span class="option-pill green">IAM roles — separate roles for data scientists, ML engineers, and pipeline service accounts</span>
+        <span class="option-pill green">VPC Service Controls — prevent training data exfiltration; restrict GCS and BigQuery to trusted perimeters</span>
+        <span class="option-pill">CMEK — encrypt model artefacts and training data with customer-managed keys</span>
+        <span class="option-pill">Private endpoints — deploy endpoints with no public IP; access via Private Service Connect</span>
+        <span class="option-pill warn">PII in training data — apply Cloud DLP before ingestion; document data provenance for compliance</span>
+        <span class="option-pill">Model cards — document model purpose, limitations, and evaluation results for governance</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /.deck -->
+
+<footer>
+  <span style="border-top: 1px solid #e5e7eb; display: inline-block; padding-top: 10px; color: #57606a; font-size: 12px;">Made with IBM Bob</span>
+</footer>
+
+<script>
+  function showTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>
