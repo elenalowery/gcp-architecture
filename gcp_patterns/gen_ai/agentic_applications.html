@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GCP Pattern: Agentic Applications</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    background: #f0f2f5;
+    color: #1f2328;
+  }
+
+  .deck { display: flex; flex-direction: column; gap: 0; }
+
+  .slide {
+    width: 100%;
+    min-height: 100vh;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 4px solid #e5e7eb;
+    page-break-after: always;
+  }
+
+  .slide-header {
+    background: #1a73e8;
+    color: #ffffff;
+    padding: 28px 48px 22px;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+  }
+  .slide-header .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.75;
+    margin-bottom: 4px;
+  }
+  .slide-header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.3px; }
+  .slide-header .gcp-badge {
+    margin-left: auto;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  .slide-body {
+    flex: 1;
+    padding: 32px 48px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .intro-text { font-size: 14px; color: #57606a; line-height: 1.6; }
+  .intro-text strong { color: #1f2328; }
+
+  /* ── Layer diagram ── */
+  .layer-diagram {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f7f8fa;
+  }
+  .layer-label {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #57606a;
+    background: #f0f2f5;
+    border-right: 1px solid #e5e7eb;
+    padding: 16px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+  }
+  .layer-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    flex: 1;
+    background: #e5e7eb;
+  }
+  .layer-cell {
+    background: #ffffff;
+    padding: 14px 18px;
+  }
+  .layer-cell.highlighted {
+    background: #f0f7ff;
+  }
+
+  /* ── Comparison table ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  .compare-table thead tr {
+    background: #1a73e8;
+    color: #ffffff;
+  }
+  .compare-table thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .compare-table thead th:first-child {
+    width: 130px;
+    background: #1557b0;
+  }
+  .compare-table thead th.col-adk   { background: #1a73e8; }
+  .compare-table thead th.col-sdk   { background: #7c5cd8; }
+  .compare-table thead th.col-cx    { background: #137333; }
+
+  .compare-table tbody tr:nth-child(even) td { background: #f7f8fa; }
+  .compare-table tbody tr:nth-child(odd)  td { background: #ffffff; }
+  .compare-table tbody td {
+    padding: 11px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+    color: #1f2328;
+    line-height: 1.5;
+  }
+  .compare-table tbody td:first-child {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #57606a;
+    background: #f7f8fa;
+    white-space: nowrap;
+  }
+  .compare-table tbody td.col-adk   { border-left: 3px solid #1a73e8; }
+  .compare-table tbody td.col-sdk   { border-left: 3px solid #7c5cd8; }
+  .compare-table tbody td.col-cx    { border-left: 3px solid #137333; }
+
+  /* ── Callout ── */
+  .callout {
+    background: #e8f0fe;
+    border: 1px solid #93c5fd;
+    border-left: 4px solid #1a73e8;
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 13.5px;
+    color: #1f2328;
+  }
+  .callout strong { color: #1967d2; }
+
+  /* ── Tag row ── */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .tag {
+    border-radius: 4px; padding: 3px 10px;
+    font-size: 12px; font-weight: 600;
+  }
+  .tag.blue   { background: #e8f0fe; color: #1967d2; }
+  .tag.purple { background: #ede9fe; color: #6d28d9; }
+  .tag.green  { background: #e6f4ea; color: #137333; }
+
+  footer {
+    text-align: center; padding: 18px;
+    font-size: 12px; color: #57606a;
+    border-top: 1px solid #e5e7eb; background: #ffffff;
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<section class="slide" id="slide-1">
+  <div class="slide-header">
+    <div>
+      <div class="eyebrow">GCP Architecture Patterns · Generative AI</div>
+      <h1>Agentic Applications in GCP</h1>
+    </div>
+    <div class="gcp-badge">Google Cloud Platform</div>
+  </div>
+  <div class="slide-body">
+
+    <p class="intro-text">
+      GCP offers three options for building agentic AI applications. <strong>They sit at different layers and are not alternatives to each other</strong> —
+      a production system often uses all three together: ADK for agent logic, Agent Platform SDK to deploy it, and CX Agent Studio for non-developer builders.
+    </p>
+
+    <div class="callout">
+      These are not mutually exclusive choices. ADK is the <strong>framework</strong>, Agent Platform SDK is the <strong>deployment layer</strong>, and CX Agent Studio is a <strong>managed product</strong> built on top of ADK for conversational use cases.
+    </div>
+
+    <!-- Comparison table -->
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="col-adk">ADK<br><span style="font-weight:400;font-size:11px;opacity:0.85;">Agent Development Kit</span></th>
+          <th class="col-sdk">Agent Platform SDK<br><span style="font-weight:400;font-size:11px;opacity:0.85;">Gemini Enterprise Agent Platform</span></th>
+          <th class="col-cx">CX Agent Studio<br><span style="font-weight:400;font-size:11px;opacity:0.85;">Conversational Agents</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>What it is</td>
+          <td class="col-adk">Open-source, modular, model-agnostic framework for building agents — reasoning, tool use, multi-agent orchestration</td>
+          <td class="col-sdk">Python SDK for Gemini Enterprise Agent Platform; managed templates + client for deploying agents to Agent Runtime</td>
+          <td class="col-cx">Minimal-code visual builder for conversational agents, built on top of ADK</td>
+        </tr>
+        <tr>
+          <td>Layer</td>
+          <td class="col-adk">Agent framework</td>
+          <td class="col-sdk">Platform client &amp; deployment layer</td>
+          <td class="col-cx">Managed product with its own runtime</td>
+        </tr>
+        <tr>
+          <td>Who uses it</td>
+          <td class="col-adk">Developers writing code</td>
+          <td class="col-sdk">Developers deploying agents — including non-ADK agents (LangGraph, LangChain, AG2)</td>
+          <td class="col-cx">Business users and agent architects with less coding</td>
+        </tr>
+        <tr>
+          <td>Runs on</td>
+          <td class="col-adk">Anywhere you containerise it, or Agent Runtime with full integration</td>
+          <td class="col-sdk">Agent Runtime (managed GCP service)</td>
+          <td class="col-cx">Google-managed CES service</td>
+        </tr>
+        <tr>
+          <td>Frameworks</td>
+          <td class="col-adk">ADK (native)</td>
+          <td class="col-sdk">Wraps LangChain, LangGraph, AG2, and LlamaIndex with managed templates</td>
+          <td class="col-cx">Its own agent model: root agent + sub-agents</td>
+        </tr>
+        <tr>
+          <td>Best for</td>
+          <td class="col-adk">Custom agent logic, multi-agent systems, MCP / A2A architectures</td>
+          <td class="col-sdk">Getting an existing LangGraph or LangChain agent onto managed hosting</td>
+          <td class="col-cx">Customer-facing chat and voice agents, contact-centre scenarios</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Tags summary -->
+    <div style="display:flex; gap:32px; flex-wrap:wrap; align-items:flex-start;">
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#57606a;margin-bottom:6px;">ADK</div>
+        <div class="tag-row">
+          <span class="tag blue">Open-source</span>
+          <span class="tag blue">Model-agnostic</span>
+          <span class="tag blue">Multi-agent</span>
+          <span class="tag blue">MCP / A2A</span>
+          <span class="tag blue">Tool use</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#57606a;margin-bottom:6px;">Agent Platform SDK</div>
+        <div class="tag-row">
+          <span class="tag purple">LangGraph</span>
+          <span class="tag purple">LangChain</span>
+          <span class="tag purple">AG2</span>
+          <span class="tag purple">LlamaIndex</span>
+          <span class="tag purple">Agent Runtime</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#57606a;margin-bottom:6px;">CX Agent Studio</div>
+        <div class="tag-row">
+          <span class="tag green">Visual builder</span>
+          <span class="tag green">Voice &amp; chat</span>
+          <span class="tag green">Contact centre</span>
+          <span class="tag green">No-code / low-code</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /.deck -->
+
+<footer>
+  <span style="border-top: 1px solid #e5e7eb; display: inline-block; padding-top: 10px; color: #57606a; font-size: 12px;">Made with IBM Bob</span>
+</footer>
+</body>
+</html>
