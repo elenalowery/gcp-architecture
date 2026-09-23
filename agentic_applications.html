@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GCP Pattern: Agentic Applications</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    background: #f0f2f5;
+    color: #1f2328;
+  }
+
+  .deck { display: flex; flex-direction: column; gap: 0; }
+
+  .slide {
+    width: 100%;
+    min-height: 100vh;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 4px solid #e5e7eb;
+    page-break-after: always;
+  }
+
+  .slide-header {
+    background: #1a73e8;
+    color: #ffffff;
+    padding: 28px 48px 22px;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+  }
+  .slide-header .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.75;
+    margin-bottom: 4px;
+  }
+  .slide-header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.3px; }
+  .slide-header .gcp-badge {
+    margin-left: auto;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  .slide-body {
+    flex: 1;
+    padding: 32px 48px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  /* ── Tabs ── */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 24px;
+  }
+  .tab-btn {
+    padding: 10px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #57606a;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: #1a73e8; }
+  .tab-btn.active { color: #1a73e8; border-bottom-color: #1a73e8; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Shared text ── */
+  .intro-text { font-size: 14px; color: #57606a; line-height: 1.6; margin-bottom: 4px; }
+  .intro-text strong { color: #1f2328; }
+
+  /* ── Callout ── */
+  .callout {
+    background: #e8f0fe;
+    border: 1px solid #93c5fd;
+    border-left: 4px solid #1a73e8;
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 13.5px;
+    color: #1f2328;
+  }
+  .callout strong { color: #1967d2; }
+
+  /* ── Comparison table ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  .compare-table thead tr { background: #1a73e8; color: #ffffff; }
+  .compare-table thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .compare-table thead th:first-child { width: 130px; background: #1557b0; }
+  .compare-table thead th.col-adk { background: #1a73e8; }
+  .compare-table thead th.col-sdk { background: #7c5cd8; }
+  .compare-table thead th.col-cx  { background: #137333; }
+
+  .compare-table tbody tr:nth-child(even) td { background: #f7f8fa; }
+  .compare-table tbody tr:nth-child(odd)  td { background: #ffffff; }
+  .compare-table tbody td {
+    padding: 11px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+    color: #1f2328;
+    line-height: 1.5;
+  }
+  .compare-table tbody td:first-child {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #57606a;
+    background: #f7f8fa;
+    white-space: nowrap;
+  }
+  .compare-table tbody td.col-adk { border-left: 3px solid #1a73e8; }
+  .compare-table tbody td.col-sdk { border-left: 3px solid #7c5cd8; }
+  .compare-table tbody td.col-cx  { border-left: 3px solid #137333; }
+
+  /* ── Tag row ── */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .tag { border-radius: 4px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
+  .tag.blue   { background: #e8f0fe; color: #1967d2; }
+  .tag.purple { background: #ede9fe; color: #6d28d9; }
+  .tag.green  { background: #e6f4ea; color: #137333; }
+
+  /* ══════════════════════════════
+     Architecture diagram styles
+     ══════════════════════════════ */
+  .arch-diagram-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .arch-diagram {
+    width: 100%;
+    max-width: 680px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .az-zone {
+    width: 100%;
+    border: 1.5px dashed #c0c4cc;
+    border-radius: 14px;
+    padding: 16px 18px 18px;
+    background: #fafafa;
+  }
+  .az-zone-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1f2328;
+    margin-bottom: 12px;
+  }
+
+  .az-node {
+    border-radius: 10px;
+    padding: 12px 18px;
+    text-align: center;
+  }
+  .az-node-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+  .az-node-sub   { font-size: 12.5px; }
+
+  .az-blue     { background: #dbeafe; border: 1.5px solid #93c5fd; }
+  .az-blue     .az-node-title { color: #1e40af; }
+  .az-blue     .az-node-sub   { color: #3b82f6; }
+
+  .az-teal     { background: #ccfbf1; border: 1.5px solid #5eead4; }
+  .az-teal     .az-node-title { color: #0f5e52; }
+  .az-teal     .az-node-sub   { color: #0d9488; }
+
+  .az-teal-lt  { background: #e6faf5; border: 1.5px solid #6ee7d4; }
+  .az-teal-lt  .az-node-title { color: #0f5e52; }
+  .az-teal-lt  .az-node-sub   { color: #0d9488; }
+
+  .az-amber    { background: #fef3c7; border: 1.5px solid #fcd34d; }
+  .az-amber    .az-node-title { color: #78350f; }
+  .az-amber    .az-node-sub   { color: #92400e; }
+
+  .az-lavender { background: #ede9fe; border: 1.5px solid #c4b5fd; }
+  .az-lavender .az-node-title { color: #3730a3; }
+  .az-lavender .az-node-sub   { color: #4f46e5; }
+
+  .az-pink-inner { background: #fdf2f8; border: 1.5px solid #f0abcb; }
+  .az-pink-inner .az-node-title { color: #9d174d; }
+  .az-pink-inner .az-node-sub   { color: #be185d; }
+
+  .az-stone    { background: #f5f5f4; border: 1.5px solid #d6d3d1; }
+  .az-stone    .az-node-title { color: #292524; }
+  .az-stone    .az-node-sub   { color: #57534e; }
+
+  .az-core-row   { display: flex; gap: 14px; align-items: flex-start; }
+  .az-core-left  { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .az-core-right { width: 160px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+
+  .az-worker-row { display: flex; gap: 10px; }
+  .az-worker-row .az-node { flex: 1; }
+
+  .az-integ-row  { display: flex; gap: 14px; align-items: flex-start; }
+  .az-integ-left { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .az-integ-right { flex: 1; }
+
+  .az-mcp-wrap {
+    background: #fce7f3;
+    border: 1.5px solid #f9a8d4;
+    border-radius: 10px;
+    padding: 12px 14px 14px;
+  }
+  .az-mcp-wrap-title { font-size: 13.5px; font-weight: 700; color: #831843; margin-bottom: 2px; }
+  .az-mcp-wrap-sub   { font-size: 12px; color: #be185d; margin-bottom: 10px; }
+
+  .az-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  .az-arrow-label { font-size: 11px; color: #6b7280; margin-bottom: 2px; }
+  .az-arrow-line  { width: 1.5px; background: #9ca3af; }
+  .az-arrow-head  {
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid #9ca3af;
+  }
+
+  .az-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 12px;
+    color: #57606a;
+    justify-content: center;
+  }
+  .az-legend-item { display: flex; align-items: center; gap: 6px; }
+  .az-legend-swatch { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; }
+
+  .arch-note {
+    font-size: 13px;
+    color: #57606a;
+    line-height: 1.55;
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 10px 16px;
+    max-width: 680px;
+    width: 100%;
+  }
+  .arch-note strong { color: #1f2328; }
+
+  footer {
+    text-align: center;
+    padding: 18px;
+    font-size: 12px;
+    color: #57606a;
+    border-top: 1px solid #e5e7eb;
+    background: #ffffff;
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<section class="slide" id="slide-main">
+  <div class="slide-header">
+    <div>
+      <div class="eyebrow">GCP Architecture Patterns · Generative AI</div>
+      <h1>Agentic Applications in GCP</h1>
+    </div>
+    <div class="gcp-badge">Google Cloud Platform</div>
+  </div>
+  <div class="slide-body">
+
+    <!-- ── Tab bar ── -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showTab('t-arch', this)">Architecture</button>
+      <button class="tab-btn"        onclick="showTab('t-frameworks', this)">GCP Frameworks</button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         TAB 1 — Reference Architecture
+         ══════════════════════════════════════ -->
+    <div class="tab-panel active" id="t-arch">
+      <p class="intro-text">
+        An agentic system routes user requests through a <strong>Supervisor Agent</strong> that plans and delegates to
+        <strong>Worker Agents</strong>. Every agent reasons against a <strong>Foundation Model (LLM)</strong>, retrieves grounding
+        context from a <strong>Knowledge Base</strong>, persists context in a <strong>Memory / State Store</strong>, and reaches
+        external systems through <strong>MCP Servers &amp; Tools</strong>.
+      </p>
+
+      <div class="arch-diagram-wrap">
+        <div class="arch-diagram">
+
+          <!-- Client zone -->
+          <div class="az-zone" style="background:#f8fbff;">
+            <div class="az-zone-label">Client</div>
+            <div class="az-node az-blue" style="width:100%;">
+              <div class="az-node-title">Client application</div>
+              <div class="az-node-sub">Web, mobile, API</div>
+            </div>
+          </div>
+
+          <!-- Arrow -->
+          <div class="az-arrow">
+            <div class="az-arrow-label">request</div>
+            <div class="az-arrow-line" style="height:22px;"></div>
+            <div class="az-arrow-head"></div>
+          </div>
+
+          <!-- Agentic core zone -->
+          <div class="az-zone" style="background:#f6fef9;">
+            <div class="az-zone-label">Agentic core</div>
+            <div class="az-core-row">
+              <div class="az-core-left">
+                <div class="az-node az-teal">
+                  <div class="az-node-title">Supervisor agent</div>
+                  <div class="az-node-sub">Plans and delegates</div>
+                </div>
+                <div class="az-arrow">
+                  <div class="az-arrow-label">delegates</div>
+                  <div class="az-arrow-line" style="height:16px;"></div>
+                  <div class="az-arrow-head"></div>
+                </div>
+                <div class="az-worker-row">
+                  <div class="az-node az-teal-lt">
+                    <div class="az-node-title">Worker agent A</div>
+                    <div class="az-node-sub">Research / RAG</div>
+                  </div>
+                  <div class="az-node az-teal-lt">
+                    <div class="az-node-title">Worker agent B</div>
+                    <div class="az-node-sub">Code &amp; analysis</div>
+                  </div>
+                </div>
+              </div>
+              <div class="az-core-right">
+                <div class="az-node az-amber">
+                  <div class="az-node-title">LLM</div>
+                  <div class="az-node-sub">Foundation model</div>
+                </div>
+                <div class="az-node az-lavender">
+                  <div class="az-node-title">Memory</div>
+                  <div class="az-node-sub">State &amp; session</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Arrow -->
+          <div class="az-arrow">
+            <div class="az-arrow-label">accesses</div>
+            <div class="az-arrow-line" style="height:22px;"></div>
+            <div class="az-arrow-head"></div>
+          </div>
+
+          <!-- Integration & knowledge zone -->
+          <div class="az-zone" style="background:#fdf8ff;">
+            <div class="az-zone-label">Integration &amp; knowledge</div>
+            <div class="az-integ-row">
+              <div class="az-integ-left">
+                <div class="az-mcp-wrap">
+                  <div class="az-mcp-wrap-title">MCP servers</div>
+                  <div class="az-mcp-wrap-sub">Hosts and exposes tools</div>
+                  <div class="az-node az-pink-inner">
+                    <div class="az-node-title">Tools</div>
+                    <div class="az-node-sub">Search, APIs, files</div>
+                  </div>
+                </div>
+                <div class="az-arrow">
+                  <div class="az-arrow-label">invokes</div>
+                  <div class="az-arrow-line" style="height:16px;"></div>
+                  <div class="az-arrow-head"></div>
+                </div>
+                <div class="az-node az-stone">
+                  <div class="az-node-title">External systems</div>
+                  <div class="az-node-sub">CRM, ERP, APIs</div>
+                </div>
+              </div>
+              <div class="az-integ-right">
+                <div class="az-node az-lavender" style="height:100%;display:flex;flex-direction:column;justify-content:center;min-height:120px;">
+                  <div class="az-node-title">Knowledge base</div>
+                  <div class="az-node-sub">Vector store, search</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div class="az-legend" style="margin-top:20px;">
+            <div class="az-legend-item">
+              <div class="az-legend-swatch" style="background:#dbeafe;border:1.5px solid #93c5fd;"></div><span>Interface</span>
+            </div>
+            <div class="az-legend-item">
+              <div class="az-legend-swatch" style="background:#ccfbf1;border:1.5px solid #5eead4;"></div><span>Agents</span>
+            </div>
+            <div class="az-legend-item">
+              <div class="az-legend-swatch" style="background:#fef3c7;border:1.5px solid #fcd34d;"></div><span>Model</span>
+            </div>
+            <div class="az-legend-item">
+              <div class="az-legend-swatch" style="background:#ede9fe;border:1.5px solid #c4b5fd;"></div><span>Memory</span>
+            </div>
+            <div class="az-legend-item">
+              <div class="az-legend-swatch" style="background:#fce7f3;border:1.5px solid #f9a8d4;"></div><span>Tools</span>
+            </div>
+            <div class="az-legend-item">
+              <div class="az-legend-swatch" style="background:#f5f5f4;border:1.5px solid #d6d3d1;"></div><span>External</span>
+            </div>
+          </div>
+
+        </div><!-- /.arch-diagram -->
+
+        
+      </div><!-- /.arch-diagram-wrap -->
+    </div><!-- /#t-arch -->
+
+    <!-- ══════════════════════════════════════
+         TAB 2 — GCP Frameworks Comparison
+         ══════════════════════════════════════ -->
+    <div class="tab-panel" id="t-frameworks">
+      <p class="intro-text">
+        GCP offers three options for building agentic AI applications. <strong>They sit at different layers and are not
+        alternatives to each other</strong> — a production system often uses all three together: ADK for agent logic,
+        Agent Platform SDK to deploy it, and CX Agent Studio for non-developer builders.
+      </p>
+
+      <div class="callout">
+        These are not mutually exclusive choices. ADK is the <strong>framework</strong>, Agent Platform SDK is the
+        <strong>deployment layer</strong>, and CX Agent Studio is a <strong>managed product</strong> built on top of
+        ADK for conversational use cases.
+      </div>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="col-adk">ADK<br><span style="font-weight:400;font-size:11px;opacity:0.85;">Agent Development Kit</span></th>
+            <th class="col-sdk">Agent Platform SDK<br><span style="font-weight:400;font-size:11px;opacity:0.85;">Gemini Enterprise Agent Platform</span></th>
+            <th class="col-cx">CX Agent Studio<br><span style="font-weight:400;font-size:11px;opacity:0.85;">Conversational Agents</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>What it is</td>
+            <td class="col-adk">Open-source, modular, model-agnostic framework for building agents — reasoning, tool use, multi-agent orchestration</td>
+            <td class="col-sdk">Python SDK for Gemini Enterprise Agent Platform; managed templates + client for deploying agents to Agent Runtime</td>
+            <td class="col-cx">Minimal-code visual builder for conversational agents, built on top of ADK</td>
+          </tr>
+          <tr>
+            <td>Layer</td>
+            <td class="col-adk">Agent framework</td>
+            <td class="col-sdk">Platform client &amp; deployment layer</td>
+            <td class="col-cx">Managed product with its own runtime</td>
+          </tr>
+          <tr>
+            <td>Who uses it</td>
+            <td class="col-adk">Developers writing code</td>
+            <td class="col-sdk">Developers deploying agents — including non-ADK agents (LangGraph, LangChain, AG2)</td>
+            <td class="col-cx">Business users and agent architects with less coding</td>
+          </tr>
+          <tr>
+            <td>Runs on</td>
+            <td class="col-adk">Anywhere you containerise it, or Agent Runtime with full integration</td>
+            <td class="col-sdk">Agent Runtime (managed GCP service)</td>
+            <td class="col-cx">Google-managed CES service</td>
+          </tr>
+          <tr>
+            <td>Frameworks</td>
+            <td class="col-adk">ADK (native)</td>
+            <td class="col-sdk">Wraps LangChain, LangGraph, AG2, and LlamaIndex with managed templates</td>
+            <td class="col-cx">Its own agent model: root agent + sub-agents</td>
+          </tr>
+          <tr>
+            <td>Best for</td>
+            <td class="col-adk">Custom agent logic, multi-agent systems, MCP / A2A architectures</td>
+            <td class="col-sdk">Getting an existing LangGraph or LangChain agent onto managed hosting</td>
+            <td class="col-cx">Customer-facing chat and voice agents, contact-centre scenarios</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="display:flex; gap:32px; flex-wrap:wrap; align-items:flex-start;">
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#57606a;margin-bottom:6px;">ADK</div>
+          <div class="tag-row">
+            <span class="tag blue">Open-source</span>
+            <span class="tag blue">Model-agnostic</span>
+            <span class="tag blue">Multi-agent</span>
+            <span class="tag blue">MCP / A2A</span>
+            <span class="tag blue">Tool use</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#57606a;margin-bottom:6px;">Agent Platform SDK</div>
+          <div class="tag-row">
+            <span class="tag purple">LangGraph</span>
+            <span class="tag purple">LangChain</span>
+            <span class="tag purple">AG2</span>
+            <span class="tag purple">LlamaIndex</span>
+            <span class="tag purple">Agent Runtime</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#57606a;margin-bottom:6px;">CX Agent Studio</div>
+          <div class="tag-row">
+            <span class="tag green">Visual builder</span>
+            <span class="tag green">Voice &amp; chat</span>
+            <span class="tag green">Contact centre</span>
+            <span class="tag green">No-code / low-code</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#t-frameworks -->
+
+  </div><!-- /.slide-body -->
+</section>
+
+</div><!-- /.deck -->
+
+<footer>
+  <span style="border-top: 1px solid #e5e7eb; display: inline-block; padding-top: 10px; color: #57606a; font-size: 12px;">Made with IBM Bob</span>
+</footer>
+
+<script>
+  function showTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>
