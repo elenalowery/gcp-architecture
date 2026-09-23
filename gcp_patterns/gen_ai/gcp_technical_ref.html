@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GCP Reference</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gcp: {
+              blue: '#4285F4',
+              red: '#EA4335',
+              yellow: '#FBBC04',
+              green: '#34A853',
+              lightBg: '#F1F5F9',
+              cardBg: '#FFFFFF',
+              border: '#CBD5E1'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-header {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-gcp-lightBg text-slate-800 antialiased min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+
+  <header class="glass-header sticky top-0 z-50 border-b border-gcp-border shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <!-- Brand / Title -->
+        <div class="flex items-center space-x-3 w-full md:w-auto">
+          <div class="p-2.5 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl shadow-md">
+            <i class="fa-solid fa-cloud-bolt text-2xl text-white"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h1 class="font-bold text-xl text-slate-800 tracking-tight">GCP Reference</h1>
+              <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-blue-100 text-blue-600 border border-blue-200">2026 Edition</span>
+            </div>
+            <p class="text-xs text-slate-500">Google Digital Leader & AI Leader Comprehensive Architecture Reference</p>
+          </div>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative w-full md:w-96">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search GCP services, keywords, concepts..."
+            class="w-full pl-10 pr-10 py-2.5 text-sm bg-white text-slate-800 placeholder-slate-400 border border-gcp-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition shadow-inner"
+          >
+          <button id="clearSearch" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs bg-slate-200 rounded-full w-5 h-5 flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
+    
+    <!-- Filter Buttons Toolbar -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <div class="flex flex-wrap gap-2" id="categoryButtons">
+        <button onclick="filterCategory('all')" class="cat-btn active bg-blue-600 text-white border border-blue-500 px-3.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-500 transition shadow-sm flex items-center gap-1.5">
+          <i class="fa-solid fa-layer-group"></i> All Services (<span id="count-all">0</span>)
+        </button>
+        <button onclick="filterCategory('ai')" class="cat-btn bg-white text-slate-600 border border-gcp-border px-3.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-100 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-brain text-purple-500"></i> AI & ML
+        </button>
+        <button onclick="filterCategory('compute')" class="cat-btn bg-white text-slate-600 border border-gcp-border px-3.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-100 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-server text-emerald-500"></i> Compute
+        </button>
+        <button onclick="filterCategory('data')" class="cat-btn bg-white text-slate-600 border border-gcp-border px-3.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-100 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-database text-blue-500"></i> Data & Analytics
+        </button>
+        <button onclick="filterCategory('api')" class="cat-btn bg-white text-slate-600 border border-gcp-border px-3.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-100 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-network-wired text-amber-500"></i> API Integration
+        </button>
+        <button onclick="filterCategory('engagement')" class="cat-btn bg-white text-slate-600 border border-gcp-border px-3.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-100 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-headset text-pink-500"></i> Engagement
+        </button>
+        <button onclick="filterCategory('security')" class="cat-btn bg-white text-slate-600 border border-gcp-border px-3.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-100 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-shield-halved text-red-500"></i> Security
+        </button>
+        <button onclick="filterCategory('networking')" class="cat-btn bg-white text-slate-600 border border-gcp-border px-3.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-100 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-diagram-project text-cyan-500"></i> Networking
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-500 self-end sm:self-auto">
+        Showing <span id="visibleCount" class="font-bold text-slate-800">0</span> services
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="serviceCards">
+
+      <!-- 1. AI & ML -->
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-purple-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="ai">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-md">AI & ML / Agent Platform</span>
+            <i class="fa-solid fa-brain text-purple-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1 flex items-center gap-2">
+            Gemini Enterprise Agent Platform
+          </h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Formerly Vertex AI • Platform</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Umbrella enterprise platform for end-to-end AI/ML lifecycle, model hosting, custom training, and agent development.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">MLOps</span>
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Model Serving</span>
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Custom Training</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-purple-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="ai">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-md">AI & ML / Agent Platform</span>
+            <i class="fa-solid fa-wand-magic-sparkles text-purple-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Agent Studio</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Low-Code / No-Code Studio</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Visual drag-and-drop low-code designer for prototyping agent prompts, tools, and reasoning workflows.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Visual Builder</span>
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Prompt Design</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-purple-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="ai">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-md">AI & ML / Agent Platform</span>
+            <i class="fa-solid fa-code text-purple-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Agent Development Kit (ADK)</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Developer Framework</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Code-first developer framework to build, program, and orchestrate agentic applications.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Code-First</span>
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Orchestration</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-purple-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="ai">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-md">AI & ML / Agent Platform</span>
+            <i class="fa-solid fa-gears text-purple-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Agent Engine / Runtime</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Managed Runtime</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Fully managed infrastructure runtime that hosts, scales, and executes deployed AI agents.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Serverless Scaling</span>
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Agent Hosting</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-purple-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="ai">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-md">AI & ML / Agent Platform</span>
+            <i class="fa-solid fa-store text-purple-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Model Garden</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Model Hub</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Curated catalog of first-party (Gemini), open-source (Gemma, Llama), and third-party models.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Gemini</span>
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Gemma</span>
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Open Source</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-purple-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="ai">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-md">AI & ML / Agent Platform</span>
+            <i class="fa-solid fa-magnifying-glass-location text-purple-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Vertex AI Search & Conversation</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Enterprise RAG & Search</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Enterprise search and conversational RAG engine with turn-key connectors and grounding.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">RAG</span>
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Grounding</span>
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Connectors</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-purple-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="ai">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-md">AI & ML / Agent Platform</span>
+            <i class="fa-solid fa-robot text-purple-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">AutoML</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">No-Code ML Training</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Suite for building custom ML models without manual code for vision, tabular, and NLP data.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Vision</span>
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Tabular</span>
+          <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">NLP</span>
+        </div>
+      </div>
+
+      <!-- 2. Compute -->
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-emerald-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="compute">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-md">Compute</span>
+            <i class="fa-solid fa-desktop text-emerald-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Compute Engine (GCE)</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">IaaS / Virtual Machines</p>
+          <p class="text-sm text-slate-600 leading-relaxed">IaaS providing virtual machines, custom machine families, Managed Instance Groups (MIGs), and Spot VMs.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">IaaS</span>
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">MIGs</span>
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Spot VMs</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-emerald-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="compute">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-md">Compute</span>
+            <i class="fa-solid fa-dharmachakra text-emerald-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Google Kubernetes Engine (GKE)</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Containers / Kubernetes</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Managed Kubernetes container orchestration featuring Standard and fully managed Autopilot modes.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Autopilot</span>
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">K8s Orchestration</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-emerald-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="compute">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-md">Compute</span>
+            <i class="fa-solid fa-cubes text-emerald-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud Run</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Serverless Containers</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Serverless container platform for stateless HTTP containers and microservices automatically auto-scaling to zero.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Scale to Zero</span>
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Knative</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-emerald-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="compute">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-md">Compute</span>
+            <i class="fa-solid fa-window-restore text-emerald-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">App Engine (GAE)</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">PaaS / Web Platform</p>
+          <p class="text-sm text-slate-600 leading-relaxed">PaaS for web applications supporting Standard and Flexible execution environments.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Standard</span>
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Flexible</span>
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">PaaS</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-emerald-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="compute">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-md">Compute</span>
+            <i class="fa-solid fa-bolt text-emerald-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud Run Functions</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">FaaS / Event-Driven</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Serverless event-driven Functions-as-a-Service (FaaS) executed in response to GCP events.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">FaaS</span>
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Event-Driven</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-emerald-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="compute">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-md">Compute</span>
+            <i class="fa-solid fa-[#000] fa-list-check text-emerald-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Batch</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">HPC & Batch Processing</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Fully managed service for scheduled batch processing, HPC, and parallel containerized workloads.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">HPC</span>
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Batch Jobs</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-emerald-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="compute">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-md">Compute</span>
+            <i class="fa-solid fa-server text-emerald-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Google Cloud VMware Engine (GCVE)</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Managed VMware SDDC</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Managed native VMware SDDC running directly on dedicated GCP bare-metal infrastructure.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">VMware</span>
+          <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Bare Metal</span>
+        </div>
+      </div>
+
+      <!-- 3. Data Management & Analytics -->
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-globe text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud Spanner</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Global Relational RDBMS</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Globally distributed, highly available relational OLTP database with strong consistency and SQL support.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Global ACID</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Horizontal Scaling</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-elephant text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">AlloyDB for PostgreSQL</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">PostgreSQL Compatible</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Enterprise-grade PostgreSQL-compatible relational database with disaggregated compute/storage and columnar acceleration.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">PostgreSQL</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Columnar Engine</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-database text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud SQL</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Managed Relational DB</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Managed relational database service for MySQL, PostgreSQL, and SQL Server.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">MySQL</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Postgres</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">SQL Server</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-chart-pie text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">BigQuery</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Data Warehouse / OLAP</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Serverless, highly scalable enterprise data warehouse (OLAP) with built-in ML and vector capabilities.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">OLAP</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">BigQuery ML</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Vector Search</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-table text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud Bigtable</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">NoSQL Wide-Column</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Fully managed NoSQL wide-column database engineered for ultra-low latency key-value workloads and time-series data.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Low Latency</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Time-Series</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">HBase</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-fire text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Firestore</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Serverless NoSQL Document</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Serverless NoSQL document database with real-time client sync and offline mobile support.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Document DB</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Real-Time Sync</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-memory text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Memorystore</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">In-Memory Cache</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Managed in-memory caching service powered by Redis and Memcached.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Redis</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Memcached</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Caching</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-[#000] fa-truck-fast text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Database Migration Service (DMS)</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">DB Migration Tool</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Managed service for simple, low-downtime database migrations into GCP.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Migration</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Minimal Downtime</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-[#000] fa-arrows-spin text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Datastream</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">CDC / Real-Time Streaming</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Serverless Change Data Capture (CDC) and streaming ingestion service.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">CDC</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Streaming Ingestion</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-[#000] fa-water text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Dataflow</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Apache Beam Processing</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Unified stream and batch data processing framework based on Apache Beam.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Apache Beam</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Stream & Batch</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-[#000] fa-diagram-project text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud Composer</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Apache Airflow Orchestration</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Fully managed workflow orchestration engine powered by Apache Airflow.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Apache Airflow</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Workflow DAGs</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-[#000] fa-code-merge text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud Data Fusion</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Low-Code ETL Platform</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Graphical low-code ETL/ELT data integration platform built on open-source CDAP.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">ETL / ELT</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Low-Code UI</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-[#000] fa-fire-flame-curved text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Dataproc</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Managed Spark / Hadoop</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Managed Hadoop and Apache Spark cluster service for big data processing.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Apache Spark</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Hadoop</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-[#000] fa-sitemap text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Dataplex</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Data Fabric & Governance</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Intelligent data fabric for unified governance, quality control, and data mesh management.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Data Mesh</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Governance</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-[#000] fa-folder-tree text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Data Catalog</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Metadata Management</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Fully managed metadata management and asset discovery tool.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Metadata Search</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Data Tagging</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="data">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md">Data & Analytics</span>
+            <i class="fa-solid fa-[#000] fa-chart-column text-blue-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Looker</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Business Intelligence (BI)</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Enterprise business intelligence, data exploration, and embedded analytics platform.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">LookML</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Dashboards</span>
+          <span class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Embedded BI</span>
+        </div>
+      </div>
+
+      <!-- 4. API Integration -->
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-amber-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="api">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-md">API Integration</span>
+            <i class="fa-solid fa-[#000] fa-key text-amber-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Apigee</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Enterprise API Management</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Enterprise API management platform for proxying, security policies, rate-limiting, and developer portals.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">API Gateway</span>
+          <span class="text-[10px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">Rate Limiting</span>
+          <span class="text-[10px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">Monetization</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-amber-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="api">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-md">API Integration</span>
+            <i class="fa-solid fa-[#000] fa-plug text-amber-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Application Integration</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Visual iPaaS Integration</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Visual integration platform for connecting SaaS applications and enterprise systems.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">iPaaS</span>
+          <span class="text-[10px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">SaaS Connectors</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-amber-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="api">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-md">API Integration</span>
+            <i class="fa-solid fa-[#000] fa-satellite-dish text-amber-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Eventarc</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Asynchronous Event Router</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Asynchronous event routing service that routes events to Cloud Run and other destinations.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">CloudEvents</span>
+          <span class="text-[10px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">Event-Driven</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-amber-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="api">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-md">API Integration</span>
+            <i class="fa-solid fa-[#000] fa-bullhorn text-amber-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud Pub/Sub</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Publish / Subscribe Messaging</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Scalable, asynchronous publish/subscribe messaging service for event-driven streaming.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">At-least-once</span>
+          <span class="text-[10px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">Decoupled</span>
+        </div>
+      </div>
+
+      <!-- 5. Customer Engagement Suite -->
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-pink-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="engagement">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-pink-700 bg-pink-100 border border-pink-200 px-2.5 py-1 rounded-md">Customer Engagement</span>
+            <i class="fa-solid fa-[#000] fa-headset text-pink-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Contact Center AI (CCAI)</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Conversational AI Suite</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Suite for AI virtual agents, agent assistance, and conversational contact center analytics.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-pink-50 text-pink-700 px-2 py-0.5 rounded border border-pink-200">Virtual Agents</span>
+          <span class="text-[10px] font-mono bg-pink-50 text-pink-700 px-2 py-0.5 rounded border border-pink-200">Agent Assist</span>
+          <span class="text-[10px] font-mono bg-pink-50 text-pink-700 px-2 py-0.5 rounded border border-pink-200">Insights</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-pink-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="engagement">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-pink-700 bg-pink-100 border border-pink-200 px-2.5 py-1 rounded-md">Customer Engagement</span>
+            <i class="fa-solid fa-[#000] fa-sparkles text-pink-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Gemini for Workspace</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Productivity Copilot</p>
+          <p class="text-sm text-slate-600 leading-relaxed">AI assistant integrated across Gmail, Docs, Sheets, Slides, and Meet.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-pink-50 text-pink-700 px-2 py-0.5 rounded border border-pink-200">Gmail</span>
+          <span class="text-[10px] font-mono bg-pink-50 text-pink-700 px-2 py-0.5 rounded border border-pink-200">Docs / Sheets</span>
+          <span class="text-[10px] font-mono bg-pink-50 text-pink-700 px-2 py-0.5 rounded border border-pink-200">Copilot</span>
+        </div>
+      </div>
+
+      <!-- 6. Security & Identity -->
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-red-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="security">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-red-700 bg-red-100 border border-red-200 px-2.5 py-1 rounded-md">Security & Identity</span>
+            <i class="fa-solid fa-[#000] fa-user-shield text-red-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud IAM</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Identity & Access Management</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Identity and Access Management service for granular access control and permissions.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-200">RBAC</span>
+          <span class="text-[10px] font-mono bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-200">Least Privilege</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-red-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="security">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-red-700 bg-red-100 border border-red-200 px-2.5 py-1 rounded-md">Security & Identity</span>
+            <i class="fa-solid fa-[#000] fa-shield-virus text-red-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Security Command Center (SCC)</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Risk & Threat Detection</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Centralized security management, risk evaluation, and threat protection platform.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-200">Threat Detection</span>
+          <span class="text-[10px] font-mono bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-200">Misconfiguration</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-red-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="security">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-red-700 bg-red-100 border border-red-200 px-2.5 py-1 rounded-md">Security & Identity</span>
+            <i class="fa-solid fa-[#000] fa-key text-red-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Secret Manager</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Credential Storage</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Secure storage and rotation service for API keys, passwords, and tokens.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-200">Secret Rotation</span>
+          <span class="text-[10px] font-mono bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-200">API Keys</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-red-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="security">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-red-700 bg-red-100 border border-red-200 px-2.5 py-1 rounded-md">Security & Identity</span>
+            <i class="fa-solid fa-[#000] fa-lock text-red-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud KMS</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Encryption Key Mgmt</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Managed key management service for creating and controlling cryptographic encryption keys.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-200">CMEK</span>
+          <span class="text-[10px] font-mono bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-200">HSM</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-red-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="security">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-red-700 bg-red-100 border border-red-200 px-2.5 py-1 rounded-md">Security & Identity</span>
+            <i class="fa-solid fa-[#000] fa-building-shield text-red-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">BeyondCorp Enterprise</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Zero Trust Access</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Zero Trust security solution enabling safe access to applications without traditional VPNs.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-200">Zero Trust</span>
+          <span class="text-[10px] font-mono bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-200">VPN-less</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-red-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="security">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-red-700 bg-red-100 border border-red-200 px-2.5 py-1 rounded-md">Security & Identity</span>
+            <i class="fa-solid fa-[#000] fa-id-badge text-red-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Workload Identity Federation</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Keyless Auth</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Keyless authentication mechanism allowing external workloads (e.g., GitHub Actions, AWS) to access GCP resources.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-200">OIDC</span>
+          <span class="text-[10px] font-mono bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-200">Keyless Auth</span>
+        </div>
+      </div>
+
+      <!-- 7. Networking -->
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-cyan-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="networking">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-700 bg-cyan-100 border border-cyan-200 px-2.5 py-1 rounded-md">Networking</span>
+            <i class="fa-solid fa-[#000] fa-network-wired text-cyan-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Virtual Private Cloud (VPC)</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Global Virtual Network</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Isolated virtual network environment with global subnets, firewalls, and routes.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Global VPC</span>
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Regional Subnets</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-cyan-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="networking">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-700 bg-cyan-100 border border-cyan-200 px-2.5 py-1 rounded-md">Networking</span>
+            <i class="fa-solid fa-[#000] fa-scale-balanced text-cyan-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud Load Balancing</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Layer 4 / Layer 7 Traffic</p>
+          <p class="text-sm text-slate-600 leading-relaxed">High-performance, global and regional layer 4 and layer 7 load balancing.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Anycast IP</span>
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">L4 / L7</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-cyan-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="networking">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-700 bg-cyan-100 border border-cyan-200 px-2.5 py-1 rounded-md">Networking</span>
+            <i class="fa-solid fa-[#000] fa-cable-car text-cyan-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud Interconnect</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Hybrid Physical Links</p>
+          <p class="text-sm text-slate-600 leading-relaxed">High-speed physical connection linking on-premises networks to GCP (Dedicated or Partner).</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Dedicated</span>
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Partner</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-cyan-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="networking">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-700 bg-cyan-100 border border-cyan-200 px-2.5 py-1 rounded-md">Networking</span>
+            <i class="fa-solid fa-[#000] fa-shield-halved text-cyan-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud VPN</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">IPsec Encryption</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Secure IPsec VPN connections over the public internet to GCP VPCs.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">HA VPN</span>
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">IPsec</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-cyan-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="networking">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-700 bg-cyan-100 border border-cyan-200 px-2.5 py-1 rounded-md">Networking</span>
+            <i class="fa-solid fa-[#000] fa-link text-cyan-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Private Service Connect (PSC)</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Private Endpoint Link</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Private endpoint connection to GCP services and hosted third-party endpoints.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Private IP</span>
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">No VPC Peering</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-cyan-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="networking">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-700 bg-cyan-100 border border-cyan-200 px-2.5 py-1 rounded-md">Networking</span>
+            <i class="fa-solid fa-[#000] fa-[#000] fa-arrow-right-from-bracket text-cyan-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud NAT</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Managed NAT</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Managed Network Address Translation service providing outbound internet access without external IPs.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Outbound Only</span>
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Private Subnets</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-cyan-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="networking">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-700 bg-cyan-100 border border-cyan-200 px-2.5 py-1 rounded-md">Networking</span>
+            <i class="fa-solid fa-[#000] fa-bolt-lightning text-cyan-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud CDN / Media CDN</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Edge Content Delivery</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Content delivery networks leveraging Google's edge points of presence for fast content delivery.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Edge Caching</span>
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Media CDN</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-cyan-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="networking">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-700 bg-cyan-100 border border-cyan-200 px-2.5 py-1 rounded-md">Networking</span>
+            <i class="fa-solid fa-[#000] fa-globe text-cyan-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Cloud DNS</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Domain Name Service</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Managed domain name system service providing low-latency name resolution.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">100% SLA</span>
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">DNSSEC</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-cyan-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="networking">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-700 bg-cyan-100 border border-cyan-200 px-2.5 py-1 rounded-md">Networking</span>
+            <i class="fa-solid fa-[#000] fa-hubspot text-cyan-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Network Connectivity Center (NCC)</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Hub & Spoke Transit</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Centralized hub-and-spoke management platform for global enterprise network transit.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Hub & Spoke</span>
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Network Transit</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-cyan-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="networking">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-700 bg-cyan-100 border border-cyan-200 px-2.5 py-1 rounded-md">Networking</span>
+            <i class="fa-solid fa-[#000] fa-chart-line text-cyan-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Network Intelligence Center</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Monitoring & Verification</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Network monitoring and topology visualization tool.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Topology Map</span>
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Connectivity Tests</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-cyan-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="networking">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-700 bg-cyan-100 border border-cyan-200 px-2.5 py-1 rounded-md">Networking</span>
+            <i class="fa-solid fa-[#000] fa-file-waveform text-cyan-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">VPC Flow Logs</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Traffic Auditing</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Network traffic log recording tool for network security and compliance audits.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Auditing</span>
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Network Logs</span>
+        </div>
+      </div>
+
+      <div class="card bg-gcp-cardBg border border-gcp-border rounded-xl p-5 shadow-sm hover:border-cyan-400 hover:shadow-md transition duration-200 flex flex-col justify-between" data-category="networking">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-700 bg-cyan-100 border border-cyan-200 px-2.5 py-1 rounded-md">Networking</span>
+            <i class="fa-solid fa-[#000] fa-shield-cat text-cyan-500 text-lg"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-1">Secure Web Proxy</h3>
+          <p class="text-xs text-slate-500 mb-3 font-mono">Egress Traffic Control</p>
+          <p class="text-sm text-slate-600 leading-relaxed">Managed solution for enforcing egress web filtering policies for outbound traffic.</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gcp-border flex flex-wrap gap-1.5">
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Egress Filtering</span>
+          <span class="text-[10px] font-mono bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">URL Inspection</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Empty State -->
+    <div id="noResults" class="hidden text-center py-16">
+      <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl border border-slate-200">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </div>
+      <h3 class="text-lg font-bold text-slate-700">No GCP services matched your search</h3>
+      <p class="text-sm text-slate-500 mt-1">Try resetting category filters or searching for alternate terms.</p>
+    </div>
+  </main>
+
+  <footer class="bg-white border-t border-gcp-border py-4 text-center text-xs text-slate-400">
+    <p>Google Cloud Platform Reference • Interactive Dashboard</p>
+  </footer>
+
+  <script>
+    let activeCategory = 'all';
+
+    function updateCounts() {
+      const cards = document.querySelectorAll('.card');
+      let total = cards.length;
+      let visible = 0;
+
+      document.getElementById('count-all').innerText = total;
+
+      cards.forEach(card => {
+        if (!card.classList.contains('hidden')) {
+          visible++;
+        }
+      });
+
+      document.getElementById('visibleCount').innerText = visible;
+
+      const noResults = document.getElementById('noResults');
+      if (visible === 0) {
+        noResults.classList.remove('hidden');
+      } else {
+        noResults.classList.add('hidden');
+      }
+    }
+
+    function filterCategory(cat) {
+      activeCategory = cat;
+      const cards = document.querySelectorAll('.card');
+      const buttons = document.querySelectorAll('.cat-btn');
+
+      buttons.forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-500');
+        btn.classList.add('bg-white', 'text-slate-600', 'border-gcp-border');
+      });
+
+      event.currentTarget.classList.remove('bg-white', 'text-slate-600', 'border-gcp-border');
+      event.currentTarget.classList.add('bg-blue-600', 'text-white', 'border-blue-500');
+
+      applySearchAndFilter();
+    }
+
+    function applySearchAndFilter() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.card');
+      const clearBtn = document.getElementById('clearSearch');
+
+      if (query.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+
+      cards.forEach(card => {
+        const matchesCategory = (activeCategory === 'all' || card.dataset.category === activeCategory);
+        const textContent = card.innerText.toLowerCase();
+        const matchesQuery = query === '' || textContent.includes(query);
+
+        if (matchesCategory && matchesQuery) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+
+      updateCounts();
+    }
+
+    document.getElementById('searchInput').addEventListener('input', applySearchAndFilter);
+
+    document.getElementById('clearSearch').addEventListener('click', () => {
+      document.getElementById('searchInput').value = '';
+      applySearchAndFilter();
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateCounts();
+    });
+  </script>
+</body>
+</html>
